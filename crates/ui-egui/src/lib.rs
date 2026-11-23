@@ -7,13 +7,13 @@
 #![forbid(unsafe_code)]
 
 /// VisionSlide update identity. Set `repo` to the published repository when one exists; keeping
-/// it empty keeps update checks inactive until VisionSlide has a published release repository.
+/// The update prompt and AppImage menu entry use VisionSlide's identity and icon.
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
     id: "visionslide",
     name: "VisionSlide",
     tagline: "Presentations and slides",
-    repo: "",
+    repo: "FutureVisionMobDev/VisionSlide",
     developer: "VisionOffice",
     bundle_id_override: Some("com.visionoffice.visionslide"),
     icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/com.visionoffice.visionslide.png")),
