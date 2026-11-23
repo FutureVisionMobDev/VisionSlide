@@ -825,7 +825,7 @@ fn options_in_backstage_opens_preferences_and_cancel_closes_it() {
 
 /// About replaces the account entry and still opens the credits dialog.
 #[test]
-fn about_has_product_links_and_credits_without_account_controls() {
+fn about_has_credits_without_account_or_community_links() {
     let mut h = harness(new_app());
     h.get_by_label("File").click();
     h.run_steps(3);
@@ -834,7 +834,8 @@ fn about_has_product_links_and_credits_without_account_controls() {
     h.run_steps(3);
     assert_eq!(page(&h), Some(Page::About));
     assert!(h.query_by_label("User Information").is_none());
-    assert!(h.query_by_label("Source on GitHub").is_some());
+    assert!(h.query_by_label("Source on GitHub").is_none());
+    assert!(h.query_by_label("Join our community on Discord").is_none());
     assert!(h.query_all_by_label("Appearance").next().is_some());
     click_on_page(&h, "Credits");
     h.run_steps(3);
