@@ -55,7 +55,8 @@ try {
     if ($properties['UpgradeCode'].Trim('{}') -ne $policy.upgradeCode) { throw 'Launcher upgrade identity changed.' }
     $dirs = @{}
     foreach ($row in (Read-Rows $database 'SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`' 3)) { $dirs[$row[0]] = @($row[1],$row[2]) }
-    if ($dirs['INSTALLFOLDER'][0] -ne 'CraftSuiteFolder' -or $dirs['CraftSuiteFolder'][1] -ne 'VisionSlide' -or
+    $suiteFolderName = ($dirs['CraftSuiteFolder'][1] -split '\|')[-1]
+    if ($dirs['INSTALLFOLDER'][0] -ne 'CraftSuiteFolder' -or $suiteFolderName -ne 'VisionSlide' -or
         $dirs['CraftSuiteFolder'][0] -ne 'LocalProgramsFolder' -or $dirs['LocalProgramsFolder'][0] -ne 'LocalAppDataFolder') {
       throw 'Launcher new-install folder must be under the per-user VisionSlide suite root.'
     }
@@ -87,8 +88,10 @@ try {
   foreach ($row in (Read-Rows $database 'SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`' 3)) {
     $directories[$row[0]] = @($row[1], $row[2])
   }
+  # MSI stores a generated 8.3 alias and the long name as `short|long` for names over 8.3.
+  $suiteFolderName = ($directories['CraftSuiteFolder'][1] -split '\|')[-1]
   if ($directories['INSTALLFOLDER'][0] -ne 'CraftSuiteFolder' -or
-      $directories['CraftSuiteFolder'][1] -ne 'VisionSlide') { throw 'Expected the app under the VisionSlide suite folder.' }
+      $suiteFolderName -ne 'VisionSlide') { throw 'Expected the app under the VisionSlide suite folder.' }
   $programs = $directories['CraftSuiteFolder'][0]
   if ($programs -eq 'ProgramFiles6432Folder') { $programs = $directories[$programs][0] }
   if ($programs -notin 'ProgramFilesFolder', 'ProgramFiles64Folder') {
