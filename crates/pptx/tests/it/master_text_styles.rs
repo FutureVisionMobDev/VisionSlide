@@ -2,10 +2,10 @@
 use std::io::{Cursor, Read, Write};
 use std::sync::Arc;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::resolve::{self, Ctx};
-use deckcraft_model::text::{Align, Bullet, ParaProps, TextBody};
-use deckcraft_model::{PhType, Placeholder, Presentation, Shape, ShapeId, defaults};
+use visionslide_geom::Xfrm;
+use visionslide_model::resolve::{self, Ctx};
+use visionslide_model::text::{Align, Bullet, ParaProps, TextBody};
+use visionslide_model::{PhType, Placeholder, Presentation, Shape, ShapeId, defaults};
 
 fn subtitle(text: &str) -> Shape {
     let mut body = TextBody::from_text(text);
@@ -30,7 +30,7 @@ fn imported(body_style: &str) -> Presentation {
         l.shapes = vec![subtitle("")];
     }
     Arc::make_mut(&mut p.slides[0]).shapes = vec![subtitle("Centered subtitle")];
-    let bytes = deckcraft_pptx::export(&p).expect("base package");
+    let bytes = visionslide_pptx::export(&p).expect("base package");
     let mut z = zip::ZipArchive::new(Cursor::new(bytes)).expect("zip");
     let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
     for i in 0..z.len() {
@@ -48,7 +48,7 @@ fn imported(body_style: &str) -> Presentation {
         out.start_file(name, zip::write::SimpleFileOptions::default()).expect("start");
         out.write_all(&data).expect("write");
     }
-    deckcraft_pptx::import(&out.finish().expect("finish").into_inner()).expect("import fixture")
+    visionslide_pptx::import(&out.finish().expect("finish").into_inner()).expect("import fixture")
 }
 
 fn resolved_subtitle(p: &Presentation) -> ParaProps {
@@ -62,7 +62,7 @@ fn resolved_subtitle(p: &Presentation) -> ParaProps {
 }
 
 fn saved(p: &Presentation) -> Presentation {
-    deckcraft_pptx::import(&deckcraft_pptx::export(p).expect("export")).expect("reopen")
+    visionslide_pptx::import(&visionslide_pptx::export(p).expect("export")).expect("reopen")
 }
 
 #[test]

@@ -1,8 +1,8 @@
 //! End-to-end tests over `.ppt` files built here from records (never files made by PowerPoint).
 #![allow(clippy::unwrap_used)]
 
-use deckcraft_model::text::{Align, Bullet, RunKind};
-use deckcraft_model::{Background, Fill, PhType, Presentation, Rgba, ShapeKind, Slide};
+use visionslide_model::text::{Align, Bullet, RunKind};
+use visionslide_model::{Background, Fill, PhType, Presentation, Rgba, ShapeKind, Slide};
 
 use crate::doc::rt;
 use crate::draw::prop;
@@ -306,13 +306,13 @@ fn check_title_placeholder(s: &Slide) {
     assert_eq!(title.fill, Some(Fill::None));
     let t = title.text.as_ref().unwrap();
     assert_eq!(t.text(), "Hello\nWorld");
-    assert_eq!(t.body.anchor, Some(deckcraft_model::text::Anchor::Middle));
+    assert_eq!(t.body.anchor, Some(visionslide_model::text::Anchor::Middle));
     let p0 = &t.paragraphs[0];
     assert_eq!(p0.props.align, Some(Align::Center));
     assert_eq!(p0.props.bullet, Some(Bullet::None));
     let r = &p0.runs[0].props;
     assert_eq!((r.size, r.bold, r.font.as_deref()), (Some(44.0), Some(true), Some("Arial")));
-    assert_eq!(r.fill, Some(Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0x11, 0x22, 0x33)))));
+    assert_eq!(r.fill, Some(Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0x11, 0x22, 0x33)))));
     assert_eq!(s.title(), "Hello\nWorld");
 }
 
@@ -334,7 +334,7 @@ fn check_group(s: &Slide) {
     let e = children[0].xfrm.unwrap();
     assert_eq!((e.x, e.y, e.w, e.h, e.flip_h), (437.5, 200.0, 62.5, 100.0, false));
     assert_eq!(children[0].geom.preset_name(), Some("ellipse"));
-    assert_eq!(children[0].fill, Some(Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0, 0xFF, 0)))));
+    assert_eq!(children[0].fill, Some(Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0, 0xFF, 0)))));
     assert_eq!(children[0].line.as_ref().and_then(|l| l.width), Some(2.0));
 }
 
@@ -354,9 +354,9 @@ fn check_text_box(s: &Slide) {
 fn check_master(p: &Presentation, s: &Slide) {
     // The master: its background, colours and decoration.
     let m = &p.masters[0];
-    assert_eq!(m.background, Some(Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0xFF, 0, 0))) }));
-    assert_eq!(m.theme.colors.get(deckcraft_model::SchemeSlot::Accent1), Rgba::rgb(0, 0xCC, 0));
-    assert!(m.shapes.iter().any(|sh| sh.ph.is_none() && sh.fill == Some(Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0, 0xCC, 0))))));
+    assert_eq!(m.background, Some(Background::Fill { fill: Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0xFF, 0, 0))) }));
+    assert_eq!(m.theme.colors.get(visionslide_model::SchemeSlot::Accent1), Rgba::rgb(0, 0xCC, 0));
+    assert!(m.shapes.iter().any(|sh| sh.ph.is_none() && sh.fill == Some(Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0, 0xCC, 0))))));
     assert_eq!(m.title_style.level(0).and_then(|l| l.run.size), Some(44.0));
     assert!(p.layout(s.layout).is_some());
 }
@@ -506,14 +506,14 @@ fn hostile_documents_never_panic() {
 }
 
 /// File > Open on a `.ppt` gives an untitled-to-disk copy: Save asks where to save instead of
-/// writing DeckCraft's own format under the `.ppt` name.
+/// writing VisionSlide's own format under the `.ppt` name.
 #[test]
 fn the_app_opens_a_ppt_and_save_asks_for_a_new_name() {
-    let dir = std::env::temp_dir().join(format!("deckcraft-ppt-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("visionslide-ppt-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("Lecture.ppt");
     std::fs::write(&path, file()).unwrap();
-    let mut s = deckcraft_engine::Session::new();
+    let mut s = visionslide_engine::Session::new();
     let r = s.execute("file.open", &serde_json::json!({"path": path.to_string_lossy()})).unwrap();
     assert_eq!(r["slides"], 1);
     let st = s.doc().unwrap();
@@ -524,13 +524,13 @@ fn the_app_opens_a_ppt_and_save_asks_for_a_new_name() {
     // Saved as .pptx, it opens again with its slide.
     let out = dir.join("Lecture.pptx");
     s.execute("file.saveAs", &serde_json::json!({"path": out.to_string_lossy()})).unwrap();
-    let back = deckcraft_engine::cmd::file::open_presentation("Lecture.pptx", &std::fs::read(&out).unwrap()).unwrap();
+    let back = visionslide_engine::cmd::file::open_presentation("Lecture.pptx", &std::fs::read(&out).unwrap()).unwrap();
     assert_eq!(back.slides.len(), 1);
     assert_eq!(back.slides[0].shapes[0].text.as_ref().unwrap().text(), "Hello\nWorld");
     std::fs::remove_dir_all(&dir).ok();
 
     // Password-protected: the same message as for a .pptx.
-    let err = deckcraft_engine::cmd::file::open_presentation("Locked.ppt", &file_with(0xF3D1_C4DF)).unwrap_err().to_string();
+    let err = visionslide_engine::cmd::file::open_presentation("Locked.ppt", &file_with(0xF3D1_C4DF)).unwrap_err().to_string();
     assert!(err.contains("Locked.ppt is password-protected"), "{err}");
 }
 
@@ -549,7 +549,7 @@ fn a_master_shape_id_is_looked_up_in_the_slides_own_master() {
     let slide = container(rt::SLIDE, 0, &[slide_atom(1, MASTER_ID, 0x7), drawing(None, &[inheriting])]);
     let (cu, doc, pics) = streams_of(0xE391_C05F, 1, slide, Some(title_master));
     let p = crate::import(&crate::cfb::build(&[("Current User", &cu), ("PowerPoint Document", &doc), ("Pictures", &pics)])).unwrap();
-    assert_eq!(p.slides[0].shapes[0].fill, Some(Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0, 0xCC, 0)))));
+    assert_eq!(p.slides[0].shapes[0].fill, Some(Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0, 0xCC, 0)))));
 }
 
 /// A run's shadow bit (TextCFException fontStyle bit 4) gives the run a shadow in the colour
@@ -576,17 +576,17 @@ fn a_shadowed_run_keeps_its_shadow() {
     let runs = &p.slides[0].shapes[0].text.as_ref().unwrap().paragraphs[0].runs;
     assert_eq!(runs[0].text, "Hi ");
     let shadow = runs[0].props.shadow.as_ref().expect("the first run is shadowed");
-    assert_eq!(shadow.color, deckcraft_model::ColorRef::rgb(Rgba::rgb(0x80, 0x80, 0x80)));
+    assert_eq!(shadow.color, visionslide_model::ColorRef::rgb(Rgba::rgb(0x80, 0x80, 0x80)));
     assert!(runs[1].props.shadow.is_none());
 }
 
 /// `tests/fixtures/old-talk.pps`: a one-slide `.pps` built here from records, for tests in other
 /// crates that need real 97–2003 bytes (`ui-egui`'s show-on-open test). Run this test with
-/// `DECKCRAFT_WRITE_PPT_FIXTURE=1` to rebuild the file after changing the builders.
+/// `VISIONSLIDE_WRITE_PPT_FIXTURE=1` to rebuild the file after changing the builders.
 #[test]
 fn the_pps_fixture_is_a_built_presentation() {
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/old-talk.pps");
-    if std::env::var_os("DECKCRAFT_WRITE_PPT_FIXTURE").is_some() {
+    if std::env::var_os("VISIONSLIDE_WRITE_PPT_FIXTURE").is_some() {
         let title =
             container(rt::SP_CONTAINER, 0, &[fsp(1, 2049, 0xA00), anchor(400, 500, 5260, 1200), placeholder(0x0D), text_box(0, "Old talk", &[])]);
         let slide = container(rt::SLIDE, 0, &[slide_atom(1, MASTER_ID, 0x7), drawing(None, &[title])]);
@@ -712,8 +712,8 @@ fn a_slide_without_its_object_is_reported_lost() {
     assert!(p.slides.is_empty());
     assert_eq!(lost, vec![format!("slide {SLIDE_ID}")]);
 
-    let mut s = deckcraft_engine::Session::new();
-    let data = deckcraft_engine::cmd::base64_encode(&bytes);
+    let mut s = visionslide_engine::Session::new();
+    let data = visionslide_engine::cmd::base64_encode(&bytes);
     let r = s.execute("file.openBytes", &serde_json::json!({"name": "Damaged.ppt", "data": data})).unwrap();
     assert_eq!(r["lostSlides"].as_array().map(Vec::len), Some(1));
     assert!(s.doc().unwrap().title().ends_with("(Repaired)"));
@@ -787,7 +787,7 @@ fn title_masters_and_slides_that_dont_follow_the_master() {
     let p = crate::import(&crate::cfb::build(&[("Current User", &cu), ("PowerPoint Document", &doc), ("Pictures", &pics)])).unwrap();
     let (_, layout) = p.layout(p.slides[0].layout).unwrap();
     assert_eq!(layout.name, "Title Master");
-    assert_eq!(layout.background, Some(Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0, 0xFF, 0))) }));
+    assert_eq!(layout.background, Some(Background::Fill { fill: Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0, 0xFF, 0))) }));
     assert!(!layout.show_master_shapes);
     assert!(layout.shapes.iter().any(|sh| sh.ph.is_none()), "the title master's own shape");
     assert_eq!(p.slides[0].background, None, "the slide follows its master's background");
@@ -800,9 +800,9 @@ fn title_masters_and_slides_that_dont_follow_the_master() {
     let (cu, doc, pics) = streams_of(0xE391_C05F, 1, alone, None);
     let p = crate::import(&crate::cfb::build(&[("Current User", &cu), ("PowerPoint Document", &doc), ("Pictures", &pics)])).unwrap();
     let s = &p.slides[0];
-    assert_eq!(s.background, Some(Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0xFF, 0, 0))) }));
+    assert_eq!(s.background, Some(Background::Fill { fill: Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0xFF, 0, 0))) }));
     assert!(!s.show_master_shapes);
-    assert_eq!(s.shapes[0].fill, Some(Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(0x11, 0x22, 0xCC)))), "the slide's own scheme");
+    assert_eq!(s.shapes[0].fill, Some(Fill::solid(visionslide_model::ColorRef::rgb(Rgba::rgb(0x11, 0x22, 0xCC)))), "the slide's own scheme");
 }
 
 fn open_streams((cu, doc, pics): (Vec<u8>, Vec<u8>, Vec<u8>)) -> Presentation {

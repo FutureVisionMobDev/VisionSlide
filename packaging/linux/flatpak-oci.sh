@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Build deckcraft as an OCI container layout and push it to GitHub Container Registry (GHCR)
+# Build visionslide as an OCI container layout and push it to GitHub Container Registry (GHCR)
 # for consumption by Flatpak OCI clients (flatpak-oci-specs).
 #
 # Usage:
 #   packaging/linux/flatpak-oci.sh [--push] [TARBALL]
 #
 # Environment variables:
-#   REGISTRY       Target registry image (default: ghcr.io/storytold/deckcraft)
+#   REGISTRY       Target registry image (defaults to ghcr.io/$GITHUB_REPOSITORY when set)
 #   TAG            Target image tag (default: $VERSION-$ARCH, also tags stable-$ARCH)
 #   GITHUB_TOKEN   Token for GHCR authentication when --push is used
 set -euo pipefail
@@ -32,7 +32,7 @@ case "$ARCH" in
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
 
-BASENAME="deckcraft-$VERSION-linux-$ARCH"
+BASENAME="visionslide-$VERSION-linux-$ARCH"
 OUT_OCI="$DIST/$BASENAME-oci"
 
 echo "==> Building Flatpak OCI layout for $BASENAME"
@@ -40,17 +40,20 @@ echo "==> Building Flatpak OCI layout for $BASENAME"
 
 [[ -d "$OUT_OCI" ]] || { echo "error: $OUT_OCI layout not generated" >&2; exit 1; }
 
-REGISTRY="${REGISTRY:-ghcr.io/storytold/deckcraft}"
+REPOSITORY="${GITHUB_REPOSITORY:-}"
+REGISTRY="${REGISTRY:-${REPOSITORY:+ghcr.io/${REPOSITORY,,}}}"
 TAG="${TAG:-$VERSION-$ARCH}"
 
-echo "==> OCI layout ready at $OUT_OCI (Target: $REGISTRY:$TAG)"
+echo "==> OCI layout ready at $OUT_OCI${REGISTRY:+ (Target: $REGISTRY:$TAG)}"
 
 if [[ "$PUSH" = 1 ]]; then
+  [[ -n "$REGISTRY" ]] || { echo "error: set REGISTRY or GITHUB_REPOSITORY before pushing" >&2; exit 1; }
   command -v skopeo >/dev/null || { echo "error: skopeo is required to push OCI images (apt install skopeo)" >&2; exit 1; }
 
   AUTH_ARGS=()
   if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    AUTH_ARGS=(--dest-creds "${GITHUB_ACTOR:-storytold}:$GITHUB_TOKEN")
+    [[ -n "${GITHUB_ACTOR:-}" ]] || { echo "error: GITHUB_ACTOR is required when GITHUB_TOKEN is set" >&2; exit 1; }
+    AUTH_ARGS=(--dest-creds "$GITHUB_ACTOR:$GITHUB_TOKEN")
   fi
 
   echo "==> Pushing to $REGISTRY:$TAG"

@@ -1,10 +1,10 @@
 //! Picture Format ▸ Color: Recolor presets and Set Transparent Color.
 
-use deckcraft_color::{Rgba, SchemeSlot};
-use deckcraft_geom::{Affine, Point, Rect, Xfrm};
-use deckcraft_model::style::{PictureAdjust, PictureMode};
-use deckcraft_model::{ColorRef, Shape, ShapeId, ShapeKind};
 use serde_json::{Value, json};
+use visionslide_color::{Rgba, SchemeSlot};
+use visionslide_geom::{Affine, Point, Rect, Xfrm};
+use visionslide_model::style::{PictureAdjust, PictureMode};
+use visionslide_model::{ColorRef, Shape, ShapeId, ShapeKind};
 
 use super::{CommandSpec, always, bad, bool_or, cmd, current_shapes, edit_shapes, has_selection, str_param, targets, text, xfrm_of};
 use crate::{Result, Session};
@@ -164,7 +164,8 @@ fn picture_pixel_at(s: &Session, p: &Value, at: &Value) -> Result<(ShapeId, Rgba
         let Some((sh, xf, to_slide)) = placed(&st.doc, &st.selection, shapes, id, Affine::IDENTITY, 0) else { continue };
         let ShapeKind::Picture { fill } = &sh.kind else { continue };
         // The camera turns the picture where it is drawn, so the click is mapped back through it too.
-        let turn = text::ctx_for(&st.doc, &st.selection).and_then(|c| deckcraft_render::camera_turn(&c, sh, xf.w, xf.h)).unwrap_or(Affine::IDENTITY);
+        let turn =
+            text::ctx_for(&st.doc, &st.selection).and_then(|c| visionslide_render::camera_turn(&c, sh, xf.w, xf.h)).unwrap_or(Affine::IDENTITY);
         let local = (to_slide * turn).inverse() * Point::new(x, y);
         if !(local.is_finite() && (0.0..=xf.w).contains(&local.x) && (0.0..=xf.h).contains(&local.y)) {
             continue;
@@ -173,9 +174,9 @@ fn picture_pixel_at(s: &Session, p: &Value, at: &Value) -> Result<(ShapeId, Rgba
             return Err(bad(CMD, "a tiled picture has no single pixel under a point; give `color`"));
         };
         let inner = Rect::new(l * xf.w, t * xf.h, xf.w - r * xf.w, xf.h - b * xf.h);
-        let dest = deckcraft_render::crop_dest(inner, fill.crop);
+        let dest = visionslide_render::crop_dest(inner, fill.crop);
         let img =
-            st.doc.media(fill.media).and_then(|m| deckcraft_render::decode_image(&m.data)).ok_or_else(|| bad(CMD, "the picture can't be read"))?;
+            st.doc.media(fill.media).and_then(|m| visionslide_render::decode_image(&m.data)).ok_or_else(|| bad(CMD, "the picture can't be read"))?;
         let (u, v) = ((local.x - dest.x0) / dest.width(), (local.y - dest.y0) / dest.height());
         if !((0.0..=1.0).contains(&u) && (0.0..=1.0).contains(&v)) {
             continue;
@@ -214,7 +215,7 @@ fn stack_path(shapes: &[Shape], id: ShapeId) -> Option<Vec<usize>> {
 /// Shape `id` among `shapes` (searched into groups), its box, and the map from that box to slide
 /// space.
 fn placed<'a>(
-    doc: &deckcraft_model::Presentation,
+    doc: &visionslide_model::Presentation,
     sel: &crate::Selection,
     shapes: &'a [Shape],
     id: ShapeId,
@@ -231,7 +232,7 @@ fn placed<'a>(
         }
         if let ShapeKind::Group { children, child } = &sh.kind {
             let ch = Rect::new(child.x, child.y, child.x + child.w, child.y + child.h);
-            if let Some(found) = placed(doc, sel, children, id, to_slide * deckcraft_geom::group_child_affine(&x, ch), depth + 1) {
+            if let Some(found) = placed(doc, sel, children, id, to_slide * visionslide_geom::group_child_affine(&x, ch), depth + 1) {
                 return Some(found);
             }
         }

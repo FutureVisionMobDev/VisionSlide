@@ -1,4 +1,4 @@
-//! The native `.deckcraft` format: a zip holding `presentation.json` (the model, minus media
+//! The native `.visionslide` format: a zip holding `presentation.json` (the model, minus media
 //! bytes), `media/<id>` and `chart-parts/<index>` binary entries, and `mimetype`. Readers ignore unknown
 //! fields, so newer files open in older builds with what those builds understand.
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
@@ -14,16 +14,19 @@ mod golden_tests;
 
 use std::sync::Arc;
 
-use deckcraft_model::text::{Paragraph, TextBody};
-use deckcraft_model::{LayoutType, Presentation, ShapeKind, defaults};
+use visionslide_model::text::{Paragraph, TextBody};
+use visionslide_model::{LayoutType, Presentation, ShapeKind, defaults};
 
 // The package itself (identity, manifest, member names, bounded reads) is shared.
-pub use craft_deckcraft_format::{Budget, EXTENSION, FormatError, LEGACY_MIMETYPE, MIMETYPE, Result, VERSION, sniff};
+pub use craft_deckcraft_format::{Budget, FormatError, LEGACY_MIMETYPE, MIMETYPE, Result, VERSION, sniff};
+
+/// Extension used for VisionSlide's native presentation files.
+pub const EXTENSION: &str = "visionslide";
 use craft_deckcraft_format::{Member, Package, media_entry};
 
 /// Serialize a presentation.
 pub fn save(p: &Presentation) -> Result<Vec<u8>> {
-    save_as(p, &format!("DeckCraft {}", env!("CARGO_PKG_VERSION")))
+    save_as(p, &format!("VisionSlide {}", env!("CARGO_PKG_VERSION")))
 }
 
 /// [`save`] naming `generator` in the manifest.
@@ -31,7 +34,7 @@ fn save_as(p: &Presentation, generator: &str) -> Result<Vec<u8>> {
     let mut presentation = p.clone();
     let parts = chart_parts::separate(&mut presentation)?;
     // Linked media saved without its bytes has no member.
-    let media: Vec<(String, &deckcraft_model::MediaItem)> =
+    let media: Vec<(String, &visionslide_model::MediaItem)> =
         p.media.iter().filter(|item| !(item.link.is_some() && item.data.is_empty())).map(|item| (media_entry(item.id.0), item)).collect();
     let members: Vec<Member<'_>> = media
         .iter()
@@ -92,7 +95,7 @@ fn load_within(bytes: &[u8], budget: Budget) -> Result<(Presentation, Vec<String
         let name = media_entry(item.id.0);
         let linked_only = item.link.is_some() && !z.contains(&name);
         if z.declared_size(&name).is_some_and(|size| size > left) {
-            return Err(FormatError::Damaged("embedded media is larger than DeckCraft can open".into()));
+            return Err(FormatError::Damaged("embedded media is larger than VisionSlide can open".into()));
         }
         // A failed read is charged for what it inflated, so later members can't reuse that budget.
         match z.read_charged(&name, &mut left) {
@@ -126,7 +129,7 @@ pub fn repair(p: &mut Presentation) {
             // An exhausted id space leaves a duplicate slide as it is: the engine refuses to
             // grow such a deck (edits by id stay ambiguous for the duplicate), and the duplicate
             // stays visible rather than the file failing to open (#407).
-            let new_id = if dup { p.alloc_id().map(deckcraft_model::SlideId) } else { None };
+            let new_id = if dup { p.alloc_id().map(visionslide_model::SlideId) } else { None };
             if let Some(s) = p.slides.get_mut(i) {
                 let s = Arc::make_mut(s);
                 if needs_layout {
@@ -145,7 +148,7 @@ pub fn repair(p: &mut Presentation) {
         p.notes_size = Presentation::default().notes_size;
     }
     // A notes page is bounded like a slide: canvas and handout drawing scale with it.
-    p.notes_size = deckcraft_model::Size::new(
+    p.notes_size = visionslide_model::Size::new(
         p.notes_size.width.clamp(*SLIDE_SIDE.start(), *SLIDE_SIDE.end()),
         p.notes_size.height.clamp(*SLIDE_SIDE.start(), *SLIDE_SIDE.end()),
     );
@@ -157,13 +160,13 @@ pub fn repair(p: &mut Presentation) {
 /// its id, and with it what animations and connectors point at. An exhausted id space leaves the
 /// rest as they are (#407).
 fn reid_duplicate_shapes(p: &mut Presentation) {
-    fn has_duplicates(shapes: &[deckcraft_model::Shape]) -> bool {
+    fn has_duplicates(shapes: &[visionslide_model::Shape]) -> bool {
         let mut seen = std::collections::HashSet::new();
         let mut dup = false;
-        deckcraft_model::walk(shapes, &mut |sh, _| dup |= !seen.insert(sh.id));
+        visionslide_model::walk(shapes, &mut |sh, _| dup |= !seen.insert(sh.id));
         dup
     }
-    fn reid(shapes: &mut [deckcraft_model::Shape], seen: &mut std::collections::HashSet<deckcraft_model::ShapeId>, next: &mut u32, depth: usize) {
+    fn reid(shapes: &mut [visionslide_model::Shape], seen: &mut std::collections::HashSet<visionslide_model::ShapeId>, next: &mut u32, depth: usize) {
         if depth > 64 {
             return;
         }
@@ -172,16 +175,16 @@ fn reid_duplicate_shapes(p: &mut Presentation) {
                 && let Some(id) = (*next).max(1).checked_add(1)
             {
                 *next = id;
-                sh.id = deckcraft_model::ShapeId(id);
+                sh.id = visionslide_model::ShapeId(id);
                 seen.insert(sh.id);
             }
-            if let deckcraft_model::ShapeKind::Group { children, .. } = &mut sh.kind {
+            if let visionslide_model::ShapeKind::Group { children, .. } = &mut sh.kind {
                 reid(children, seen, next, depth + 1);
             }
         }
     }
     let mut next = p.next_id;
-    let mut fix = |shapes: &mut Vec<deckcraft_model::Shape>| {
+    let mut fix = |shapes: &mut Vec<visionslide_model::Shape>| {
         if has_duplicates(shapes) {
             reid(shapes, &mut std::collections::HashSet::new(), &mut next, 0);
         }
@@ -208,12 +211,12 @@ pub const SLIDE_SIDE: std::ops::RangeInclusive<f64> = 72.0..=4032.0;
 
 /// A slide size the views and renderer can always lay out: a missing, zero, negative or
 /// non-finite side gives the 16:9 default, and each side is brought into [`SLIDE_SIDE`].
-pub fn sane_slide_size(s: deckcraft_model::Size) -> deckcraft_model::Size {
+pub fn sane_slide_size(s: visionslide_model::Size) -> visionslide_model::Size {
     let ok = |v: f64| v.is_finite() && v > 0.0;
     if !(ok(s.width) && ok(s.height)) {
         return defaults::WIDE;
     }
-    deckcraft_model::Size::new(s.width.clamp(*SLIDE_SIDE.start(), *SLIDE_SIDE.end()), s.height.clamp(*SLIDE_SIDE.start(), *SLIDE_SIDE.end()))
+    visionslide_model::Size::new(s.width.clamp(*SLIDE_SIDE.start(), *SLIDE_SIDE.end()), s.height.clamp(*SLIDE_SIDE.start(), *SLIDE_SIDE.end()))
 }
 
 /// Slides read from an outline: each title with its body paragraphs (level 0–8, text).
@@ -249,7 +252,7 @@ const MAX_COORD: f64 = 1.0e6;
 /// Numbers no view can draw or no file should keep: non-finite positions, sizes and angles become
 /// 0, huge ones are clamped, angles are brought into 0–360, crops into a sane range, font sizes
 /// into 1–4000 pt and line widths into 0–1584 pt (PowerPoint's limits).
-fn sane_xfrm(x: &mut deckcraft_model::Xfrm) {
+fn sane_xfrm(x: &mut visionslide_model::Xfrm) {
     let fin = |v: f64| if v.is_finite() { v } else { 0.0 };
     x.x = fin(x.x).clamp(-MAX_COORD, MAX_COORD);
     x.y = fin(x.y).clamp(-MAX_COORD, MAX_COORD);
@@ -261,7 +264,7 @@ fn sane_xfrm(x: &mut deckcraft_model::Xfrm) {
     }
 }
 
-fn sane_run(p: &mut deckcraft_model::text::RunProps) {
+fn sane_run(p: &mut visionslide_model::text::RunProps) {
     p.size = p.size.filter(|v| v.is_finite() && *v > 0.0).map(|v| v.clamp(1.0, 4000.0));
     for s in p.shadow.iter_mut().chain(p.inner_shadow.iter_mut()) {
         sane_shadow(s);
@@ -287,7 +290,7 @@ fn effect_size(v: f64, max: f64) -> f64 {
     if v.is_finite() { v.clamp(0.0, max) } else { 0.0 }
 }
 
-fn sane_shadow(s: &mut deckcraft_model::style::Shadow) {
+fn sane_shadow(s: &mut visionslide_model::style::Shadow) {
     s.blur = effect_size(s.blur, MAX_SHADOW);
     s.dist = effect_size(s.dist, MAX_SHADOW);
     s.dir = if s.dir.is_finite() { s.dir.rem_euclid(360.0) } else { 0.0 };
@@ -300,7 +303,7 @@ fn sane_shadow(s: &mut deckcraft_model::style::Shadow) {
     }
 }
 
-fn sane_reflection(r: &mut deckcraft_model::style::Reflection) {
+fn sane_reflection(r: &mut visionslide_model::style::Reflection) {
     r.blur = effect_size(r.blur, MAX_REFLECTION);
     r.dist = effect_size(r.dist, MAX_REFLECTION);
     if r.align.as_deref().is_some_and(|v| !matches!(v, "tl" | "t" | "tr" | "l" | "ctr" | "r" | "bl" | "b" | "br")) {
@@ -309,13 +312,13 @@ fn sane_reflection(r: &mut deckcraft_model::style::Reflection) {
 }
 
 /// Run properties a list style hands down to the text that inherits it.
-fn sane_list_style(ls: &mut deckcraft_model::text::ListStyle) {
+fn sane_list_style(ls: &mut visionslide_model::text::ListStyle) {
     for level in ls.levels.iter_mut().flatten() {
         sane_run(&mut level.run);
     }
 }
 
-fn sane_effects(e: &mut deckcraft_model::Effects) {
+fn sane_effects(e: &mut visionslide_model::Effects) {
     for s in e.outer_shadow.iter_mut().chain(e.inner_shadow.iter_mut()) {
         sane_shadow(s);
     }
@@ -328,7 +331,7 @@ fn sane_effects(e: &mut deckcraft_model::Effects) {
     }
 }
 
-fn sane_shapes(shapes: &mut [deckcraft_model::Shape], depth: usize) {
+fn sane_shapes(shapes: &mut [visionslide_model::Shape], depth: usize) {
     if depth > 64 {
         return;
     }
@@ -352,17 +355,17 @@ fn sane_shapes(shapes: &mut [deckcraft_model::Shape], depth: usize) {
             }
         }
         match &mut sh.kind {
-            deckcraft_model::ShapeKind::Picture { fill: deckcraft_model::style::PictureFill { crop, .. } }
-            | deckcraft_model::ShapeKind::Media(deckcraft_model::MediaClip { crop, .. }) => {
+            visionslide_model::ShapeKind::Picture { fill: visionslide_model::style::PictureFill { crop, .. } }
+            | visionslide_model::ShapeKind::Media(visionslide_model::MediaClip { crop, .. }) => {
                 for c in crop {
                     *c = if c.is_finite() { c.clamp(-10.0, 1.0) } else { 0.0 };
                 }
             }
-            deckcraft_model::ShapeKind::Group { children, child } => {
+            visionslide_model::ShapeKind::Group { children, child } => {
                 sane_xfrm(child);
                 sane_shapes(children, depth + 1);
             }
-            deckcraft_model::ShapeKind::Table(t) => {
+            visionslide_model::ShapeKind::Table(t) => {
                 for cell in t.rows.iter_mut().flat_map(|r| r.cells.iter_mut()) {
                     sane_list_style(&mut cell.text.list_style);
                 }
@@ -532,8 +535,8 @@ mod tests;
 
 #[test]
 fn outline_table_rows_are_indented_and_do_not_become_slides() {
-    use deckcraft_model::table::{Cell, Row, Table};
-    use deckcraft_model::{Shape, ShapeKind, Xfrm};
+    use visionslide_model::table::{Cell, Row, Table};
+    use visionslide_model::{Shape, ShapeKind, Xfrm};
     let mut p = defaults::new_presentation(None);
     let layout = defaults::layout_of_kind(&p, LayoutType::TitleAndContent).unwrap();
     let mut s = defaults::new_slide(&mut p, layout).expect("slide");

@@ -7,9 +7,9 @@
 
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
 use kurbo::{Affine, BezPath};
 use vello_cpu::{Pixmap, RenderContext, peniko};
+use visionslide_color::Rgba;
 
 /// Side of one pattern cell, in points.
 pub const CELL: f64 = 0.75;

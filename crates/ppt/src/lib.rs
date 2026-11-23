@@ -2,7 +2,7 @@
 //! Open Specifications: [MS-CFB] (the compound file container), [MS-PPT] (the presentation
 //! records) and [MS-ODRAW] (the shapes and pictures).
 //!
-//! [`import`] reads a presentation leniently into the DeckCraft model: unknown records are
+//! [`import`] reads a presentation leniently into the VisionSlide model: unknown records are
 //! skipped, damaged ones are left out, and every size, count and depth is bounded. Saving goes
 //! through the `.pptx` and native writers; there is no `.ppt` writer.
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
@@ -17,7 +17,7 @@ mod geom;
 mod record;
 mod text;
 
-use deckcraft_model::Presentation;
+use visionslide_model::Presentation;
 
 /// Name of the stream holding the presentation.
 const DOCUMENT_STREAM: &str = "PowerPoint Document";

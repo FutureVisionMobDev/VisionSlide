@@ -104,7 +104,7 @@ fn commit_album(s: &mut Session, items: Vec<AlbumItem>, opts: AlbumOpts, replace
         };
         let at = if let Some((_, ids)) = &replace {
             let st = s.doc()?;
-            let indices: Vec<usize> = ids.iter().filter_map(|id| st.doc.slide_index(deckcraft_model::SlideId(*id as u32))).collect();
+            let indices: Vec<usize> = ids.iter().filter_map(|id| st.doc.slide_index(visionslide_model::SlideId(*id as u32))).collect();
             let Some(at) = indices.iter().copied().min() else {
                 return Err(bad("insert.photoAlbumEdit", "that photo album is no longer in this presentation"));
             };
@@ -211,7 +211,7 @@ fn album_opts(p: &Value) -> Result<AlbumOpts> {
         Some(Value::String(s)) if s.trim().is_empty() => None,
         Some(Value::String(s)) => {
             let name = s.trim();
-            let found = deckcraft_model::theme::builtin_themes().into_iter().find(|t| t.name.eq_ignore_ascii_case(name));
+            let found = visionslide_model::theme::builtin_themes().into_iter().find(|t| t.name.eq_ignore_ascii_case(name));
             let Some(t) = found else {
                 return Err(bad("insert.photoAlbum", format!("unknown theme `{name}`")));
             };
@@ -295,7 +295,7 @@ fn album_items(p: &Value) -> Result<Vec<AlbumItem>> {
         if !ct.starts_with("image/") {
             return Err(bad("insert.photoAlbum", format!("{name} is not a picture")));
         }
-        if ct != "image/svg+xml" && deckcraft_render::decode_image(&bytes).is_none() {
+        if ct != "image/svg+xml" && visionslide_render::decode_image(&bytes).is_none() {
             return Err(bad("insert.photoAlbum", format!("{name}: the picture can't be read")));
         }
         let (px_w, px_h) = image_px(&bytes);
@@ -439,7 +439,7 @@ struct AlbumMark {
 }
 
 fn parse_album_mark(raw: &str) -> Option<AlbumMark> {
-    let rest = raw.strip_prefix("deckcraft-album:")?;
+    let rest = raw.strip_prefix("visionslide-album:")?;
     let (id_str, rest) = rest.split_once(';').unwrap_or((rest, ""));
     let id = id_str.parse::<u32>().ok().filter(|id| *id != 0)?;
     let mut mark = AlbumMark { id, layout: String::new(), frame: String::new(), captions: false, grayscale: false, theme: String::new() };
@@ -462,7 +462,7 @@ fn parse_album_mark(raw: &str) -> Option<AlbumMark> {
 fn album_marker(id: u32, opts: &AlbumOpts) -> String {
     let theme = opts.theme.as_deref().unwrap_or("");
     format!(
-        "deckcraft-album:{id};layout={};frame={};captions={};gray={};theme={theme}",
+        "visionslide-album:{id};layout={};frame={};captions={};gray={};theme={theme}",
         opts.layout_key,
         opts.frame_key,
         if opts.captions { 1 } else { 0 },
@@ -477,7 +477,7 @@ fn stamp_album_slide(s: &mut Session, album_id: u32, opts: &AlbumOpts) -> Result
             return Err(bad("insert.photoAlbum", "no slide to mark"));
         };
         let slide = std::sync::Arc::make_mut(slide);
-        if slide.raw_ext.as_deref().is_none_or(|ext| ext.starts_with("deckcraft-album:")) {
+        if slide.raw_ext.as_deref().is_none_or(|ext| ext.starts_with("visionslide-album:")) {
             slide.raw_ext = Some(marker);
         }
         slide.name = "Photo Album".into();
@@ -503,11 +503,11 @@ fn album_id_param(p: &Value) -> Option<u32> {
     }
 }
 
-fn slides_with_album(doc: &deckcraft_model::Presentation, id: u32) -> Vec<u64> {
+fn slides_with_album(doc: &visionslide_model::Presentation, id: u32) -> Vec<u64> {
     doc.slides.iter().filter(|s| s.raw_ext.as_deref().and_then(parse_album_mark).is_some_and(|m| m.id == id)).map(|s| u64::from(s.id.0)).collect()
 }
 
-fn album_name_run(doc: &deckcraft_model::Presentation, index: usize) -> Vec<u64> {
+fn album_name_run(doc: &visionslide_model::Presentation, index: usize) -> Vec<u64> {
     if doc.slides.get(index).is_none_or(|s| s.name != "Photo Album") {
         return Vec::new();
     }
@@ -553,7 +553,7 @@ fn album_target(s: &Session, p: &Value) -> Result<(u32, Vec<u64>)> {
 
 /// Whether a slide holds anything besides album items: shapes, notes, comments, a background, a
 /// transition, animations, a colour map or tags.
-fn has_slide_content(s: &deckcraft_model::Slide) -> bool {
+fn has_slide_content(s: &visionslide_model::Slide) -> bool {
     !s.shapes.is_empty()
         || !s.notes.text().trim().is_empty()
         || !s.comments.is_empty()
@@ -564,11 +564,11 @@ fn has_slide_content(s: &deckcraft_model::Slide) -> bool {
         || !s.tags.is_empty()
 }
 
-fn pic_count(slide: &deckcraft_model::Slide) -> usize {
+fn pic_count(slide: &visionslide_model::Slide) -> usize {
     slide.shapes.iter().filter(|sh| matches!(sh.kind, ShapeKind::Picture { .. })).count()
 }
 
-fn infer_album(slides: &[&deckcraft_model::Slide], theme_now: &str) -> (String, String, bool, bool, String) {
+fn infer_album(slides: &[&visionslide_model::Slide], theme_now: &str) -> (String, String, bool, bool, String) {
     let max_pics = slides.iter().map(|s| pic_count(s)).max().unwrap_or(1);
     let per = if max_pics >= 3 {
         "4"
@@ -616,12 +616,12 @@ fn infer_album(slides: &[&deckcraft_model::Slide], theme_now: &str) -> (String, 
 /// name one large picture many times.
 ///
 /// The flag is true when something was left out for a limit.
-fn items_from_slides(doc: &deckcraft_model::Presentation, slides: &[&deckcraft_model::Slide]) -> (Vec<Value>, bool) {
+fn items_from_slides(doc: &visionslide_model::Presentation, slides: &[&visionslide_model::Slide]) -> (Vec<Value>, bool) {
     let mut items = Vec::new();
     let mut total = 0usize;
     let mut omitted = false;
     'slides: for slide in slides {
-        let pics: Vec<&deckcraft_model::Shape> = slide.shapes.iter().filter(|sh| matches!(sh.kind, ShapeKind::Picture { .. })).collect();
+        let pics: Vec<&visionslide_model::Shape> = slide.shapes.iter().filter(|sh| matches!(sh.kind, ShapeKind::Picture { .. })).collect();
         if pics.is_empty() {
             let text = slide
                 .shapes
@@ -670,8 +670,8 @@ fn items_from_slides(doc: &deckcraft_model::Presentation, slides: &[&deckcraft_m
 }
 
 /// The slides of album `ids` as the editor would seed them.
-fn album_slides<'a>(st: &'a crate::DocState, ids: &[u64]) -> Vec<&'a deckcraft_model::Slide> {
-    ids.iter().filter_map(|sid| u32::try_from(*sid).ok()).filter_map(|n| st.doc.slide(deckcraft_model::SlideId(n))).collect()
+fn album_slides<'a>(st: &'a crate::DocState, ids: &[u64]) -> Vec<&'a visionslide_model::Slide> {
+    ids.iter().filter_map(|sid| u32::try_from(*sid).ok()).filter_map(|n| st.doc.slide(visionslide_model::SlideId(n))).collect()
 }
 
 fn album_seed(s: &Session) -> Result<Value> {
@@ -679,7 +679,7 @@ fn album_seed(s: &Session) -> Result<Value> {
     let st = s.doc()?;
     let slides = album_slides(st, &ids);
     let (items, _) = items_from_slides(&st.doc, &slides);
-    let theme_now = st.doc.masters.first().map(|m| m.theme.name.clone()).filter(|n| !n.is_empty()).unwrap_or_else(|| "DeckCraft".into());
+    let theme_now = st.doc.masters.first().map(|m| m.theme.name.clone()).filter(|n| !n.is_empty()).unwrap_or_else(|| "VisionSlide".into());
     let inferred = infer_album(&slides, &theme_now);
     let mark = slides.first().and_then(|sl| sl.raw_ext.as_deref().and_then(parse_album_mark));
     let (layout, frame, captions, grayscale, theme) = if let Some(mark) = mark {
@@ -772,8 +772,8 @@ fn insert_album(s: &mut Session, items: Vec<AlbumItem>, opts: &AlbumOpts, at: Op
 mod seed_tests {
     use std::sync::Arc;
 
-    use deckcraft_model::style::PictureFill;
-    use deckcraft_model::{Shape, ShapeId, defaults};
+    use visionslide_model::style::PictureFill;
+    use visionslide_model::{Shape, ShapeId, defaults};
 
     use super::*;
 
@@ -788,11 +788,11 @@ mod seed_tests {
             ..Default::default()
         };
         Arc::make_mut(&mut p.slides[0]).shapes = (0..500).map(pic).collect();
-        let slides: Vec<&deckcraft_model::Slide> = p.slides.iter().map(|s| s.as_ref()).collect();
+        let slides: Vec<&visionslide_model::Slide> = p.slides.iter().map(|s| s.as_ref()).collect();
         let (items, omitted) = items_from_slides(&p, &slides);
         assert_eq!(items.len(), ALBUM_MAX_ITEMS);
         assert!(omitted);
-        let few: Vec<&deckcraft_model::Slide> = Vec::new();
+        let few: Vec<&visionslide_model::Slide> = Vec::new();
         assert!(!items_from_slides(&p, &few).1);
     }
 
@@ -807,7 +807,7 @@ mod seed_tests {
         let st = s.doc_mut().unwrap();
         let doc = Arc::make_mut(&mut st.doc);
         let mut extra = doc.slides.last().unwrap().as_ref().clone();
-        extra.id = deckcraft_model::SlideId(doc.alloc_id().unwrap());
+        extra.id = visionslide_model::SlideId(doc.alloc_id().unwrap());
         doc.slides.push(Arc::new(extra));
         let n = doc.slides.len();
         let e = s.execute("insert.photoAlbumEdit", &json!({"pictures": [{"text": "x"}], "layout": "1"})).unwrap_err().to_string();
@@ -825,7 +825,7 @@ mod seed_tests {
         let st = s.doc_mut().unwrap();
         let doc = Arc::make_mut(&mut st.doc);
         let mut extra = doc.slides.last().unwrap().as_ref().clone();
-        extra.id = deckcraft_model::SlideId(doc.alloc_id().unwrap());
+        extra.id = visionslide_model::SlideId(doc.alloc_id().unwrap());
         extra.shapes = vec![Shape { id: ShapeId(90_000), ..Default::default() }];
         doc.slides.push(Arc::new(extra));
         let e = s.execute("insert.photoAlbumEdit", &json!({"pictures": [{"text": "x"}], "layout": "1"})).unwrap_err().to_string();
@@ -842,9 +842,9 @@ mod seed_tests {
         let st = s.doc_mut().unwrap();
         let doc = Arc::make_mut(&mut st.doc);
         let mut extra = doc.slides.last().unwrap().as_ref().clone();
-        extra.id = deckcraft_model::SlideId(doc.alloc_id().unwrap());
+        extra.id = visionslide_model::SlideId(doc.alloc_id().unwrap());
         extra.shapes.clear();
-        extra.notes = deckcraft_model::text::TextBody::from_text("speaker notes");
+        extra.notes = visionslide_model::text::TextBody::from_text("speaker notes");
         doc.slides.push(Arc::new(extra));
         let e = s.execute("insert.photoAlbumEdit", &json!({"pictures": [{"text": "x"}], "layout": "1"})).unwrap_err().to_string();
         assert!(e.contains("delete the rest"), "{e}");
@@ -853,7 +853,7 @@ mod seed_tests {
     /// A shapeless slide with a background, transition, colour map or tags counts as content; a plain empty one does not.
     #[test]
     fn slide_level_settings_count_as_slide_content() {
-        use deckcraft_model::Slide;
+        use visionslide_model::Slide;
         assert!(!has_slide_content(&Slide::default()));
         assert!(has_slide_content(&Slide { tags: vec![("k".into(), "v".into())], ..Default::default() }));
         assert!(has_slide_content(&Slide { color_map: Some(vec![("bg1".into(), "lt1".into())]), ..Default::default() }));

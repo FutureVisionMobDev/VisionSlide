@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{MediaId, Shape, ShapeId, Slide, SlideId};
 use serde_json::{Value, json};
+use visionslide_model::text::TextBody;
+use visionslide_model::{MediaId, Shape, ShapeId, Slide, SlideId};
 
 use super::{
     CommandSpec, NO_ID_SPACE, bad, base64_encode, bool_or, can_redo, can_undo, cmd, has_doc, has_selection, has_slide, id_param, ids_param, ok,
@@ -82,8 +82,8 @@ fn copy_inner(s: &mut Session, p: &Value) -> Result<String> {
         if t.is_range() {
             let body = super::text::body_of(st, t).cloned().unwrap_or_default();
             let (a, b) = t.ordered();
-            let plain = deckcraft_model::edit::text_range(&body, a, b);
-            let sliced = deckcraft_model::edit::slice(&body, a, b);
+            let plain = visionslide_model::edit::text_range(&body, a, b);
+            let sliced = visionslide_model::edit::slice(&body, a, b);
             s.clipboard = crate::Clipboard { text: Some(sliced), plain: plain.clone(), ..Default::default() };
             return Ok(plain);
         }
@@ -145,11 +145,11 @@ fn copy_inner(s: &mut Session, p: &Value) -> Result<String> {
 
 /// On a slide, a copy of a placeholder is a regular shape: give `shapes` the look they inherit
 /// there. In Slide Master view a copy stays a placeholder, so this changes nothing.
-pub(crate) fn detach_on_slide(doc: &deckcraft_model::Presentation, sel: &crate::Selection, shapes: &mut [Shape]) {
+pub(crate) fn detach_on_slide(doc: &visionslide_model::Presentation, sel: &crate::Selection, shapes: &mut [Shape]) {
     if sel.target == crate::Target::Slides
         && let Some(ctx) = super::text::ctx_for(doc, sel)
     {
-        shapes.iter_mut().for_each(|sh| deckcraft_model::resolve::detach_placeholder(&ctx, sh));
+        shapes.iter_mut().for_each(|sh| visionslide_model::resolve::detach_placeholder(&ctx, sh));
     }
 }
 
@@ -158,25 +158,25 @@ pub(crate) fn detach_on_slide(doc: &deckcraft_model::Presentation, sel: &crate::
 /// shape on the top level or not found. A turned shape in a group stretched more one way than the
 /// other is drawn skewed, which a box cannot hold, so it gets the unskewed box Ungroup gives it.
 fn box_on_slide(
-    doc: &deckcraft_model::Presentation,
+    doc: &visionslide_model::Presentation,
     sel: &crate::Selection,
     shapes: &[Shape],
     id: ShapeId,
-    x: &deckcraft_geom::Xfrm,
-) -> Option<deckcraft_geom::Xfrm> {
+    x: &visionslide_geom::Xfrm,
+) -> Option<visionslide_geom::Xfrm> {
     fn rec(
-        doc: &deckcraft_model::Presentation,
+        doc: &visionslide_model::Presentation,
         sel: &crate::Selection,
         shapes: &[Shape],
         id: ShapeId,
-        x: &deckcraft_geom::Xfrm,
+        x: &visionslide_geom::Xfrm,
         depth: usize,
-    ) -> Option<deckcraft_geom::Xfrm> {
+    ) -> Option<visionslide_geom::Xfrm> {
         if depth > 64 {
             return None;
         }
         shapes.iter().find_map(|sh| {
-            let deckcraft_model::ShapeKind::Group { children, child } = &sh.kind else {
+            let visionslide_model::ShapeKind::Group { children, child } = &sh.kind else {
                 return None;
             };
             let inner = if children.iter().any(|c| c.id == id) { *x } else { rec(doc, sel, children, id, x, depth + 1)? };
@@ -231,10 +231,10 @@ fn cut(s: &mut Session, p: &Value) -> Result<Value> {
 /// attached to a shape that was copied too follow its copy; ends attached to a shape outside the
 /// copied set are detached (the connector keeps its geometry), so a copy never stays glued to
 /// the original or to an unrelated shape that happens to share an id in another deck.
-pub(crate) fn reid(cmd: &str, doc: &mut deckcraft_model::Presentation, shapes: &mut [Shape]) -> Result<HashMap<ShapeId, ShapeId>> {
+pub(crate) fn reid(cmd: &str, doc: &mut visionslide_model::Presentation, shapes: &mut [Shape]) -> Result<HashMap<ShapeId, ShapeId>> {
     fn rec(
         cmd: &str,
-        doc: &mut deckcraft_model::Presentation,
+        doc: &mut visionslide_model::Presentation,
         shapes: &mut [Shape],
         map: &mut HashMap<ShapeId, ShapeId>,
         depth: usize,
@@ -255,7 +255,7 @@ pub(crate) fn reid(cmd: &str, doc: &mut deckcraft_model::Presentation, shapes: &
     let mut map = HashMap::new();
     rec(cmd, doc, shapes, &mut map, 0)?;
     walk_mut(shapes, &mut |s| {
-        if let deckcraft_model::ShapeKind::Connector { start, end } = &mut s.kind {
+        if let visionslide_model::ShapeKind::Connector { start, end } = &mut s.kind {
             for e in [start, end] {
                 *e = e.and_then(|(id, site)| map.get(&id).map(|n| (*n, site)));
             }
@@ -266,7 +266,7 @@ pub(crate) fn reid(cmd: &str, doc: &mut deckcraft_model::Presentation, shapes: &
 
 /// Point copied animations at the copies: targets and triggers in `map` follow it; an animation
 /// whose target wasn't copied is dropped, and a trigger that wasn't copied is cleared.
-pub(crate) fn remap_animations(anims: &mut Vec<deckcraft_model::Animation>, map: &HashMap<ShapeId, ShapeId>) {
+pub(crate) fn remap_animations(anims: &mut Vec<visionslide_model::Animation>, map: &HashMap<ShapeId, ShapeId>) {
     anims.retain_mut(|a| {
         let Some(n) = map.get(&a.shape) else { return false };
         a.shape = *n;
@@ -302,7 +302,7 @@ fn remap_media(map: &HashMap<MediaId, MediaId>) -> impl FnMut(&mut MediaId) + '_
 
 /// Add the clipboard's media to `doc` and return the ids that changed: an id already used in
 /// `doc` by other bytes (another deck) gets a fresh id, and the pasted shapes must use it.
-fn bring_media(cmd: &str, doc: &mut deckcraft_model::Presentation, media: &[deckcraft_model::MediaItem]) -> Result<HashMap<MediaId, MediaId>> {
+fn bring_media(cmd: &str, doc: &mut visionslide_model::Presentation, media: &[visionslide_model::MediaItem]) -> Result<HashMap<MediaId, MediaId>> {
     let mut map = HashMap::new();
     for m in media {
         match doc.media(m.id) {
@@ -397,7 +397,7 @@ fn paste(s: &mut Session, p: &Value) -> Result<Value> {
                 {
                     sh.name = super::insert::first_free_name(base, &taken, count);
                 }
-                deckcraft_model::walk(std::slice::from_ref(sh), &mut |m, _| {
+                visionslide_model::walk(std::slice::from_ref(sh), &mut |m, _| {
                     taken.insert(m.name.clone());
                     count += 1;
                 });
@@ -440,7 +440,7 @@ fn paste_external_body(s: &mut Session, body: &TextBody) -> Result<Value> {
     let body = body.clone();
     s.edit(|doc, sel| {
         let list = crate::shapes_mut(doc, sel).ok_or_else(|| bad("edit.paste", "no slide"))?;
-        let sh = deckcraft_model::find_shape_mut(list, ShapeId(id)).ok_or_else(|| bad("edit.paste", "no text box"))?;
+        let sh = visionslide_model::find_shape_mut(list, ShapeId(id)).ok_or_else(|| bad("edit.paste", "no text box"))?;
         if let Some(t) = sh.text.as_mut() {
             let (wrap, autofit) = (t.body.wrap, t.body.autofit);
             *t = body.clone();
@@ -495,9 +495,9 @@ pub(crate) fn bake_theme(shapes: &mut [Shape], theme: &crate::SourceTheme) {
         match v {
             Value::Object(o) => {
                 if o.get("kind").and_then(Value::as_str) == Some("scheme")
-                    && let Some(slot) = o.get("slot").and_then(|x| serde_json::from_value::<deckcraft_color::SchemeSlot>(x.clone()).ok())
-                    && slot != deckcraft_color::SchemeSlot::PhClr
-                    && let Ok(rgb) = serde_json::to_value(theme.colors.get(deckcraft_model::map_slot(&theme.color_map, slot)))
+                    && let Some(slot) = o.get("slot").and_then(|x| serde_json::from_value::<visionslide_color::SchemeSlot>(x.clone()).ok())
+                    && slot != visionslide_color::SchemeSlot::PhClr
+                    && let Ok(rgb) = serde_json::to_value(theme.colors.get(visionslide_model::map_slot(&theme.color_map, slot)))
                 {
                     o.clear();
                     o.insert("kind".into(), json!("rgb"));
@@ -551,20 +551,25 @@ fn paste_picture(s: &mut Session) -> Result<Value> {
     let media = bring_media("edit.pasteSpecial", &mut doc, &clip.media)?;
     crate::media_refs::visit_mut::shapes(&mut clip.shapes, &mut remap_media(&media));
     let mut slide = st.current_slide().cloned().ok_or_else(|| bad("edit.pasteSpecial", "no slide"))?;
-    let xs: Vec<deckcraft_geom::Xfrm> = clip.shapes.iter().filter_map(|x| x.xfrm).collect();
+    let xs: Vec<visionslide_geom::Xfrm> = clip.shapes.iter().filter_map(|x| x.xfrm).collect();
     let b = super::arrange::union_bounds(&xs).ok_or_else(|| bad("edit.pasteSpecial", "nothing to draw"))?;
-    let gx = deckcraft_geom::Xfrm::new(b.x0, b.y0, b.width(), b.height());
+    let gx = visionslide_geom::Xfrm::new(b.x0, b.y0, b.width(), b.height());
     let gid = ShapeId(u32::MAX - 1);
     let one = if clip.shapes.len() == 1 {
         let mut sh = clip.shapes[0].clone();
         sh.id = gid;
         sh
     } else {
-        Shape { id: gid, xfrm: Some(gx), kind: deckcraft_model::ShapeKind::Group { children: clip.shapes.clone(), child: gx }, ..Default::default() }
+        Shape {
+            id: gid,
+            xfrm: Some(gx),
+            kind: visionslide_model::ShapeKind::Group { children: clip.shapes.clone(), child: gx },
+            ..Default::default()
+        }
     };
     slide.shapes = vec![one];
     const SCALE: f64 = 2.0;
-    let img = deckcraft_render::render_shape(&doc, &slide, gid, SCALE).ok_or_else(|| bad("edit.pasteSpecial", "the shapes could not be drawn"))?;
+    let img = visionslide_render::render_shape(&doc, &slide, gid, SCALE).ok_or_else(|| bad("edit.pasteSpecial", "the shapes could not be drawn"))?;
     // render_shape draws the bounds plus an 8 pt margin (room for shadows and outlines).
     let (w, h) = (img.width as f64 / SCALE, img.height as f64 / SCALE);
     let same_slide = clip.shapes.iter().any(|c| st.shape(c.id).is_some());
@@ -623,7 +628,7 @@ fn duplicate(s: &mut Session, p: &Value) -> Result<Value> {
                 let (a, to_a) = crate::connect::locate(doc, sel, &list, *src)?;
                 let (b, to_b) = crate::connect::locate(doc, sel, &list, *copy)?;
                 let (a, b) = (xfrm_of(doc, sel, a), xfrm_of(doc, sel, b));
-                let d = to_b * deckcraft_geom::Point::new(b.x, b.y) - to_a * deckcraft_geom::Point::new(a.x, a.y);
+                let d = to_b * visionslide_geom::Point::new(b.x, b.y) - to_a * visionslide_geom::Point::new(a.x, a.y);
                 (d.x.is_finite() && d.y.is_finite()).then_some((d.x, d.y))
             })
             .unwrap_or((off, off));
@@ -631,7 +636,7 @@ fn duplicate(s: &mut Session, p: &Value) -> Result<Value> {
         // Every name on the slide, group members included, so a copy never repeats one.
         let mut taken = std::collections::HashSet::new();
         let mut count = 0;
-        deckcraft_model::walk(&list, &mut |sh, _| {
+        visionslide_model::walk(&list, &mut |sh, _| {
             taken.insert(sh.name.clone());
             count += 1;
         });
@@ -655,7 +660,7 @@ fn duplicate(s: &mut Session, p: &Value) -> Result<Value> {
         shapes.extend(copies.by_ref().take(top));
         // A member's copy goes last among its group's children, as a top-level copy goes last on the slide.
         for (c, src) in copies.zip(sources.iter().skip(top)) {
-            deckcraft_model::sibling_list_mut(shapes, *src).ok_or_else(|| bad("edit.duplicate", "no such shape"))?.push(c);
+            visionslide_model::sibling_list_mut(shapes, *src).ok_or_else(|| bad("edit.duplicate", "no such shape"))?.push(c);
         }
         sel.shapes = new_ids.clone();
         let made = (sel.slide, sel.target, sources.into_iter().zip(new_ids.iter().copied()).collect());
@@ -687,9 +692,9 @@ fn grouped_targets(list: &[Shape], ids: &[ShapeId]) -> Vec<ShapeId> {
 
 /// The offset in the space `to_slide` maps onto the slide that moves a shape by (`dx`, `dy`) on
 /// the slide. A group with no width or height draws nothing, and the offset stays as it is.
-fn offset_in(to_slide: deckcraft_geom::Affine, dx: f64, dy: f64) -> (f64, f64) {
+fn offset_in(to_slide: visionslide_geom::Affine, dx: f64, dy: f64) -> (f64, f64) {
     let back = to_slide.inverse();
-    let v = back * deckcraft_geom::Point::new(dx, dy) - back * deckcraft_geom::Point::ZERO;
+    let v = back * visionslide_geom::Point::new(dx, dy) - back * visionslide_geom::Point::ZERO;
     if v.x.is_finite() && v.y.is_finite() { (v.x, v.y) } else { (dx, dy) }
 }
 
@@ -712,11 +717,11 @@ fn delete(s: &mut Session, p: &Value) -> Result<Value> {
     s.edit(|doc, sel| {
         let shapes = crate::shapes_mut(doc, sel).ok_or_else(|| bad("edit.delete", "no slide"))?;
         let mut before = Vec::new();
-        deckcraft_model::walk(shapes, &mut |s, _| before.push(s.id));
+        visionslide_model::walk(shapes, &mut |s, _| before.push(s.id));
         let n = remove_shapes(shapes, &ids);
         // Everything that is gone: the given ids plus group descendants and emptied groups.
         let mut left = Vec::new();
-        deckcraft_model::walk(shapes, &mut |s, _| left.push(s.id));
+        visionslide_model::walk(shapes, &mut |s, _| left.push(s.id));
         let mut gone = ids.clone();
         gone.extend(before.into_iter().filter(|i| !left.contains(i)));
         // Animations of deleted shapes go too.
@@ -757,7 +762,7 @@ pub(crate) fn remove_shapes(shapes: &mut Vec<Shape>, ids: &[ShapeId]) -> usize {
 
 fn count(v: &[Shape]) -> usize {
     let mut n = 0;
-    deckcraft_model::walk(v, &mut |_, _| n += 1);
+    visionslide_model::walk(v, &mut |_, _| n += 1);
     n
 }
 

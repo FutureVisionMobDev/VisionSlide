@@ -1,10 +1,10 @@
 //! The Preferences (Options) dialog: controls apply as they change and Cancel, Esc and the
 //! window's close button put the settings back the way they were (#752, reported as #878).
 
-use deckcraft_engine::Session;
 use egui_kittest::kittest::Queryable;
 use egui_kittest::{Harness, Node};
 use serde_json::json;
+use visionslide_engine::Session;
 
 use crate::theme::Brightness;
 use crate::{Services, SlideApp};

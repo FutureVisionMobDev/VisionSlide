@@ -1,4 +1,4 @@
-//! DrawingML colours for DeckCraft: `Rgba`, scheme slots, colour schemes and colour transforms.
+//! DrawingML colours for VisionSlide: `Rgba`, scheme slots, colour schemes and colour transforms.
 //! They live in craft-libs (`craft_drawingml::color`, craft-libs#778 and #792), shared with the
 //! PPTX reader and writer; this crate re-exports them under the name the app uses.
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]

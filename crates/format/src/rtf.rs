@@ -7,12 +7,12 @@
 //! or the `\li` indent) into the tab-indented outline [`crate::outline_to_slides`] understands, or,
 //! with [`rtf_to_slides`], straight into slides that keep empty titles and titles starting `- `.
 
-use deckcraft_model::Presentation;
-use deckcraft_model::text::Paragraph;
+use visionslide_model::Presentation;
+use visionslide_model::text::Paragraph;
 
 fn write_runs(w: &mut craft_rtf::OutlineWriter, p: &Paragraph) {
     for r in &p.runs {
-        if matches!(r.kind, deckcraft_model::text::RunKind::Break) {
+        if matches!(r.kind, visionslide_model::text::RunKind::Break) {
             w.line_break();
             continue;
         }
@@ -555,7 +555,7 @@ mod tests {
 
     #[test]
     fn export_reads_back_as_the_same_outline() {
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         let outline = "Plan {Q3}\n\tGrow — fast 😀\n\t\tEurope\\Asia\nCafé résumé\n\tDone\n";
         crate::outline_to_slides(&mut p, outline);
         let rtf = slides_to_rtf(&p);
@@ -567,7 +567,7 @@ mod tests {
     /// A title with two paragraphs: the plain outline keeps both, the RTF export kept only the first.
     #[test]
     fn every_title_paragraph_is_exported() {
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         crate::outline_to_slides(&mut p, "First line\n\tBody\n");
         let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
         let title = slide.shapes.iter_mut().find(|sh| sh.ph_type().is_some_and(|k| k.is_title())).and_then(|sh| sh.text.as_mut()).unwrap();
@@ -583,7 +583,7 @@ mod tests {
     fn reads_powerpoint_outline_with_styles_and_empty_titles() {
         let rtf = r"{\rtf1\ansi{\stylesheet{\s1\li360 heading 1;}{\s2\li1080 heading 2;}{\s3\li1800 heading 3;}}\pard\plain\s1\li0 {\f1 Title one}{\f1 \par }\pard\plain\s2\li360 {\pntext\pard\plain\f3 \'95\tab}{\f2 Body a\par }\pard\plain\s3\li1080 Body b\par\pard\plain\s1 {\f3 \par }\pard\plain\s1 - dash\par\pard\plain\s2 x\par}";
         assert_eq!(rtf_to_outline(rtf), "Title one\n\tBody a\n\t\tBody b\n- dash\n\tx\n");
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         assert_eq!(rtf_to_slides(&mut p, rtf), 3);
         assert_eq!(crate::slides_to_outline(&p), "Title one\n\tBody a\n\t\tBody b\n\n- dash\n\tx\n");
     }
@@ -597,14 +597,14 @@ mod tests {
     #[test]
     fn an_empty_title_after_an_inherited_heading_style_is_kept() {
         let rtf = r"{\rtf1\ansi{\stylesheet{\s1\li360 heading 1;}}\pard\s1 A\par\par B\par}";
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         assert_eq!(rtf_to_slides(&mut p, rtf), 3);
     }
 
     #[test]
     fn outline_rtf_without_heading_styles_keeps_unicode_and_caps_deep_levels() {
         let rtf = r"{\rtf1\ansi\pard\li0 Caf\'e9 \uc1\u233?\par\pard\li3600 Deep\par}";
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         assert_eq!(rtf_to_slides(&mut p, rtf), 1);
         assert_eq!(crate::slides_to_outline(&p), "Café é\n\t\t\t\t\t\t\t\t\tDeep\n");
     }
@@ -612,18 +612,18 @@ mod tests {
     #[test]
     fn escaped_unicode_titles_and_levels_beyond_nine_survive_slide_import() {
         let rtf = r"{\rtf1\ansi\pard\outlinelevel0 Caf\'e9 \uc1\u233?\par\pard\outlinelevel10 Deep\par}";
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         assert_eq!(rtf_to_slides(&mut p, rtf), 1);
         let expected = "Café é\n\t\t\t\t\t\t\t\t\tDeep\n";
         assert_eq!(crate::slides_to_outline(&p), expected);
-        let mut reopened = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut reopened = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         rtf_to_slides(&mut reopened, &slides_to_rtf(&p));
         assert_eq!(crate::slides_to_outline(&reopened), expected);
     }
 
     #[test]
     fn export_writes_heading_styles() {
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         crate::outline_to_slides(&mut p, "A\n\tB\n\t\tC\n");
         let rtf = slides_to_rtf(&p);
         assert!(rtf.contains("{\\s9\\li3240") && rtf.contains("\\pard\\s1\\outlinelevel0") && rtf.contains("\\pard\\s3\\outlinelevel2"), "{rtf}");
@@ -647,7 +647,7 @@ mod tests {
     fn surrogate_pairs_bullets_and_binary_groups_survive_tokenization() {
         let rtf = "{\\rtf1\\ansi{\\stylesheet{\\s1\\li360 heading 1;}{\\s2\\li1080 heading 2;}}\\pard\\s1 \\u-10179?\\u-8704? \\u-10179?\\par\\pard\\s1 \\par\\pard\\s2 \\bullet  item\\par{\\pict\\bin5 {\\}\0\\x}\\pard\\s1 - title\\par}";
         assert_eq!(rtf_to_outline(rtf), "😀 \u{fffd}\n\t• item\n- title\n");
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = visionslide_model::defaults::blank_presentation(visionslide_model::defaults::WIDE, Default::default(), false);
         assert_eq!(rtf_to_slides(&mut p, rtf), 3);
         assert_eq!(crate::slides_to_outline(&p), "😀 \u{fffd}\n\n\t• item\n- title\n");
     }

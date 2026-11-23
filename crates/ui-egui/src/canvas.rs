@@ -6,11 +6,11 @@
 //! slide are drawn on the area around it (the pasteboard), where they can be selected and moved;
 //! the slide show, exports and thumbnails clip to the slide.
 
-use deckcraft_engine::tools::{Hit, box_handles};
-use deckcraft_engine::{Mods, PointerEvent, PointerKind, Target, ToolKind};
-use deckcraft_geom::{Point, Xfrm};
 use egui::{Align2, Color32, CornerRadius, Pos2, Rect, Sense, Stroke, Ui, pos2, vec2};
 use serde_json::json;
+use visionslide_engine::tools::{Hit, box_handles};
+use visionslide_engine::{Mods, PointerEvent, PointerKind, Target, ToolKind};
+use visionslide_geom::{Point, Xfrm};
 
 use crate::SlideApp;
 use crate::theme::{self, Tokens};
@@ -64,7 +64,7 @@ fn mods(ui: &Ui) -> Mods {
 /// The slide's rect on screen for the current zoom.
 pub fn layout(app: &SlideApp, avail: Rect) -> (Rect, f32) {
     let Some(d) = app.session.active() else { return (avail, 1.0) };
-    let page = deckcraft_engine::page_size(d);
+    let page = visionslide_engine::page_size(d);
     // Loaded sizes are repaired; a zero or non-finite side would still make the fit infinite.
     let side = |v: f64| if v.is_finite() { (v as f32).max(1.0) } else { 1.0 };
     let (sw, sh) = (side(page.width), side(page.height));
@@ -273,7 +273,7 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
         Some((Target::Master { master }, d)) => master_tex(ui.ctx(), &d.doc, master, None, px, visible, typing_into),
         Some((Target::Layout { master, layout }, d)) => master_tex(ui.ctx(), &d.doc, master, Some(layout), px, visible, typing_into),
         Some((t @ (Target::Handout | Target::NotesMaster), d)) => {
-            deckcraft_engine::master_page(&d.doc, t).and_then(|p| master_tex(ui.ctx(), &p, 0, None, px, visible, typing_into))
+            visionslide_engine::master_page(&d.doc, t).and_then(|p| master_tex(ui.ctx(), &p, 0, None, px, visible, typing_into))
         }
         None => None,
     };
@@ -289,7 +289,7 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
     media_frames(app, &painter, xf);
     // Notes Master view: the current slide inside the slide-image placeholder, as in PowerPoint.
     let notes_preview = app.session.active().filter(|d| d.selection.target == Target::NotesMaster).and_then(|d| {
-        let frame = d.doc.notes_master.as_ref()?.shapes.iter().find(|s| s.ph_type() == Some(deckcraft_model::PhType::SlideImage))?.xfrm?;
+        let frame = d.doc.notes_master.as_ref()?.shapes.iter().find(|s| s.ph_type() == Some(visionslide_model::PhType::SlideImage))?.xfrm?;
         Some((d.doc.clone(), d.selection.slide.min(d.doc.slides.len().saturating_sub(1)), frame))
     });
     if let Some((doc, idx, f)) = notes_preview
@@ -312,7 +312,7 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
         // Where the slides go on a printed handout, as in PowerPoint's preview.
         let (n, s) = (d.doc.notes_size, d.doc.slide_size);
         let aspect = s.width / s.height.max(1.0);
-        for b in deckcraft_engine::pdf::handout_boxes(app.ui.handout_per_page, (n.width, n.height), aspect) {
+        for b in visionslide_engine::pdf::handout_boxes(app.ui.handout_per_page, (n.width, n.height), aspect) {
             let r = Rect::from_min_max(
                 pos2(slide_rect.min.x + b.x0 as f32 * scale, slide_rect.min.y + b.y0 as f32 * scale),
                 pos2(slide_rect.min.x + b.x1 as f32 * scale, slide_rect.min.y + b.y1 as f32 * scale),
@@ -369,24 +369,24 @@ fn screen_rect(xf: Xf, x: &Xfrm) -> Rect {
 
 fn master_tex(
     ctx: &egui::Context,
-    doc: &deckcraft_model::Presentation,
+    doc: &visionslide_model::Presentation,
     master: usize,
     layout: Option<usize>,
     px: (u32, u32),
-    visible: deckcraft_render::Region,
-    editing_text: Option<deckcraft_model::ShapeId>,
-) -> Option<(egui::TextureHandle, deckcraft_render::Region)> {
+    visible: visionslide_render::Region,
+    editing_text: Option<visionslide_model::ShapeId>,
+) -> Option<(egui::TextureHandle, visionslide_render::Region)> {
     let scale = px.0 as f64 / doc.slide_size.width.max(1.0);
     let region = crate::textures::fit_texture(
-        deckcraft_render::pasteboard_region(px, scale, deckcraft_render::layout_extent(doc, master, layout), visible),
+        visionslide_render::pasteboard_region(px, scale, visionslide_render::layout_extent(doc, master, layout), visible),
         visible,
         crate::textures::max_side(ctx),
     );
-    let img = deckcraft_render::render_layout(
+    let img = visionslide_render::render_layout(
         doc,
         master,
         layout,
-        &deckcraft_render::RenderOpts { scale, edit: true, editing_text, offset: region.offset(), size: Some(region.size()), ..Default::default() },
+        &visionslide_render::RenderOpts { scale, edit: true, editing_text, offset: region.offset(), size: Some(region.size()), ..Default::default() },
     );
     Some((crate::textures::upload_editor(ctx, "master-canvas", crate::textures::to_color_image(&img, false)), region))
 }

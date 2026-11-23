@@ -3,11 +3,11 @@
 
 use std::sync::Arc;
 
-use deckcraft_color::{ColorTransform, Rgba, SchemeSlot};
-use deckcraft_geom::Xfrm;
-use deckcraft_model::style::{ColorRef, Dash, Effects, Fill, Glow, Gradient, GradientShape, GradientStop, Line, PatternFill, Reflection, Shadow};
-use deckcraft_model::text::{Align, AutoFit, BodyProps, ParaProps, Paragraph, Run, RunProps, Spacing, TabStop, TextBody, TextDir};
-use deckcraft_model::{Geom, Presentation, Shape, ShapeId, ShapeKind, defaults};
+use visionslide_color::{ColorTransform, Rgba, SchemeSlot};
+use visionslide_geom::Xfrm;
+use visionslide_model::style::{ColorRef, Dash, Effects, Fill, Glow, Gradient, GradientShape, GradientStop, Line, PatternFill, Reflection, Shadow};
+use visionslide_model::text::{Align, AutoFit, BodyProps, ParaProps, Paragraph, Run, RunProps, Spacing, TabStop, TextBody, TextDir};
+use visionslide_model::{Geom, Presentation, Shape, ShapeId, ShapeKind, defaults};
 
 fn shape(p: &mut Presentation, name: &str, x: f64, y: f64, w: f64, h: f64) -> Shape {
     Shape { id: ShapeId(p.alloc_id().expect("id")), name: name.into(), xfrm: Some(Xfrm::new(x, y, w, h)), ..Default::default() }
@@ -74,7 +74,7 @@ fn style_deck() -> Presentation {
         ..Default::default()
     };
 
-    let layout = defaults::layout_of_kind(&p, deckcraft_model::LayoutType::Blank).unwrap_or_default();
+    let layout = defaults::layout_of_kind(&p, visionslide_model::LayoutType::Blank).unwrap_or_default();
     let mut s = defaults::new_slide(&mut p, layout).expect("slide");
 
     let mut word = shape(&mut p, "Styled text", 40.0, 40.0, 400.0, 180.0);
@@ -150,8 +150,8 @@ fn style_deck() -> Presentation {
 }
 
 fn round(p: &Presentation) -> Presentation {
-    let bytes = deckcraft_pptx::export(p).expect("export");
-    deckcraft_pptx::import(&bytes).expect("import")
+    let bytes = visionslide_pptx::export(p).expect("export");
+    visionslide_pptx::import(&bytes).expect("import")
 }
 
 fn by_name<'a>(p: &'a Presentation, name: &str) -> &'a Shape {
@@ -263,12 +263,12 @@ fn text_and_group_3d_survive() {
     let mut grp = shape(&mut p3, "Group3D", 10.0, 60.0, 100.0, 80.0);
     grp.effects = Some(Effects { raw3d: Some(grp_3d.into()), ..Default::default() });
     grp.kind = ShapeKind::Group { children: vec![sh, sh_flat], child: Xfrm::new(10.0, 10.0, 100.0, 80.0) };
-    let layout = defaults::layout_of_kind(&p3, deckcraft_model::LayoutType::Blank).unwrap_or_default();
+    let layout = defaults::layout_of_kind(&p3, visionslide_model::LayoutType::Blank).unwrap_or_default();
     let mut s3 = defaults::new_slide(&mut p3, layout).expect("slide");
     s3.shapes.push(grp);
     p3.slides.push(Arc::new(s3));
 
-    let bytes = deckcraft_pptx::export(&p3).expect("export");
+    let bytes = visionslide_pptx::export(&p3).expect("export");
     let slide_xml = {
         use std::io::Read;
         let mut z = zip::ZipArchive::new(std::io::Cursor::new(&bytes)).expect("zip");
@@ -279,7 +279,7 @@ fn text_and_group_3d_survive() {
     assert!(!slide_xml.contains("<a:effectLst/>"), "Group3D with only raw3d must not emit empty effectLst: {slide_xml}");
     assert!(slide_xml.contains("<a:flatTx z=\"0\"/>"), "{slide_xml}");
 
-    let r3 = deckcraft_pptx::import(&bytes).expect("import");
+    let r3 = visionslide_pptx::import(&bytes).expect("import");
     let r3_twice = round(&r3);
     let g3 = by_name(&r3, "Group3D");
     let g3_raw = g3.effects.as_ref().and_then(|e| e.raw3d.as_deref()).unwrap_or("");
@@ -345,7 +345,7 @@ fn rewrite_zip_entry(bytes: &[u8], entry_name: &str, f: impl Fn(&str) -> String)
 
 #[test]
 fn paragraph_build_without_bld_lst_still_folds_into_by_paragraph() {
-    use deckcraft_model::anim::{AnimClass, AnimStart, Animation, TextBuild};
+    use visionslide_model::anim::{AnimClass, AnimStart, Animation, TextBuild};
     let mut pres = defaults::new_presentation(None);
     let mut sh = shape(&mut pres, "Title 1", 50.0, 50.0, 400.0, 200.0);
     let shape_id = sh.id;
@@ -361,13 +361,13 @@ fn paragraph_build_without_bld_lst_still_folds_into_by_paragraph() {
         text_build: TextBuild::ByParagraph,
         ..Default::default()
     });
-    let bytes = deckcraft_pptx::export(&pres).unwrap();
+    let bytes = visionslide_pptx::export(&pres).unwrap();
     let without_bld = rewrite_zip_entry(&bytes, "ppt/slides/slide1.xml", |xml| {
         let start = xml.find("<p:bldLst>").expect("bldLst");
         let end = xml.find("</p:bldLst>").expect("/bldLst") + "</p:bldLst>".len();
         format!("{}{}", &xml[..start], &xml[end..])
     });
-    let back = deckcraft_pptx::import(&without_bld).unwrap();
+    let back = visionslide_pptx::import(&without_bld).unwrap();
     assert_eq!(back.slides[0].animations.len(), 1);
     assert_eq!(back.slides[0].animations[0].text_build, TextBuild::ByParagraph);
 
@@ -377,8 +377,8 @@ fn paragraph_build_without_bld_lst_still_folds_into_by_paragraph() {
     let s_after = Arc::make_mut(&mut pres_after.slides[0]);
     s_after.animations[0].start = AnimStart::AfterPrevious;
     s_after.animations[0].duration_ms = 800;
-    let bytes_after = deckcraft_pptx::export(&pres_after).unwrap();
-    let back_explicit_after = deckcraft_pptx::import(&bytes_after).unwrap();
+    let bytes_after = visionslide_pptx::export(&pres_after).unwrap();
+    let back_explicit_after = visionslide_pptx::import(&bytes_after).unwrap();
     assert_eq!(back_explicit_after.slides[0].animations.len(), 1);
     assert_eq!(back_explicit_after.slides[0].animations[0].text_build, TextBuild::ByParagraph);
     assert_eq!(back_explicit_after.slides[0].animations[0].duration_ms, 800);
@@ -388,12 +388,12 @@ fn paragraph_build_without_bld_lst_still_folds_into_by_paragraph() {
         let end = xml.find("</p:bldLst>").expect("/bldLst") + "</p:bldLst>".len();
         format!("{}{}", &xml[..start], &xml[end..])
     });
-    let back_after = deckcraft_pptx::import(&without_bld_after).unwrap();
+    let back_after = visionslide_pptx::import(&without_bld_after).unwrap();
     assert_eq!(back_after.slides[0].animations.len(), 2);
     assert!(back_after.slides[0].animations.iter().all(|a| a.text_build == TextBuild::default()));
     // Explicit bldP with build!="p" (e.g. build="cust") opts out of folding.
     let custom_bld = rewrite_zip_entry(&bytes, "ppt/slides/slide1.xml", |xml| xml.replace(r#"build="p""#, r#"build="cust""#));
-    let back_cust = deckcraft_pptx::import(&custom_bld).unwrap();
+    let back_cust = visionslide_pptx::import(&custom_bld).unwrap();
     assert_eq!(back_cust.slides[0].animations.len(), 2);
     assert!(back_cust.slides[0].animations.iter().all(|a| a.text_build == TextBuild::default()));
 
@@ -401,14 +401,14 @@ fn paragraph_build_without_bld_lst_still_folds_into_by_paragraph() {
     // disagrees with the 500ms first paragraph span must not fold into a 500ms build.
     let mut pres_with = pres.clone();
     Arc::make_mut(&mut pres_with.slides[0]).animations[0].start = AnimStart::WithPrevious;
-    let bytes_with = deckcraft_pptx::export(&pres_with).unwrap();
+    let bytes_with = visionslide_pptx::export(&pres_with).unwrap();
     let mismatched_offset = rewrite_zip_entry(&bytes_with, "ppt/slides/slide1.xml", |xml| {
         let start = xml.find("<p:bldLst>").expect("bldLst");
         let end = xml.find("</p:bldLst>").expect("/bldLst") + "</p:bldLst>".len();
         let stripped = format!("{}{}", &xml[..start], &xml[end..]);
         stripped.replacen(r#"<p:cond delay="500"/>"#, r#"<p:cond delay="1000"/>"#, 1)
     });
-    let back_mismatch = deckcraft_pptx::import(&mismatched_offset).unwrap();
+    let back_mismatch = visionslide_pptx::import(&mismatched_offset).unwrap();
     assert_eq!(back_mismatch.slides[0].animations.len(), 2);
     assert!(back_mismatch.slides[0].animations.iter().all(|a| a.text_build == TextBuild::default()));
 }

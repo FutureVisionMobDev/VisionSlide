@@ -1,4 +1,4 @@
-//! DeckCraft's egui frontend: a PowerPoint-style UI over `deckcraft-engine`.
+//! VisionSlide's egui frontend: a PowerPoint-style UI over `visionslide-engine`.
 //!
 //! The UI is thin: every action goes through [`SlideApp::run`], which handles UI commands
 //! (views, panes, zoom) here and sends everything else to the engine. The ribbon, menus,
@@ -6,13 +6,19 @@
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 #![forbid(unsafe_code)]
 
-/// DeckCraft as craft-update knows it, with its 128 px icon and accent colour: the update
-/// prompt shows both, and an AppImage's menu entry gets the icon.
+/// VisionSlide update identity. Set `repo` to the published repository when one exists; keeping
+/// it empty keeps update checks inactive until VisionSlide has a published release repository.
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
-    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.deckcraft.png")),
+    id: "visionslide",
+    name: "VisionSlide",
+    tagline: "Presentations and slides",
+    repo: "",
+    developer: "VisionOffice",
+    bundle_id_override: Some("com.visionoffice.visionslide"),
+    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/com.visionoffice.visionslide.png")),
     accent: Some([0xf0, 0x7a, 0x1e]),
-    ..craft_update::suite::DECKCRAFT
+    ..craft_update::app::App::new("visionslide", "VisionSlide", "Presentations and slides", "")
 };
 
 pub mod backstage;
@@ -41,10 +47,10 @@ pub mod widgets;
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 
-use deckcraft_engine::{Mods, Session, Target, UiRequest};
-use deckcraft_model::{LayoutId, MasterId, SlideId};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use visionslide_engine::{Mods, Session, Target, UiRequest};
+use visionslide_model::{LayoutId, MasterId, SlideId};
 
 pub use control::{ControlRequest, ControlResponse};
 
@@ -137,7 +143,7 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
         Some("Cmd+P"),
         "{layout?, perPage?, slides?, includeHidden?, frame?, paper?: letter|a4|legal|a3, orientation?: portrait|landscape}",
     ),
-    ("app.about", "About DeckCraft", None, "{}"),
+    ("app.about", "About VisionSlide", None, "{}"),
     ("app.checkUpdates", "Check for Updates…", None, "{}"),
     ("app.palette", "Command Palette", Some("Cmd+Shift+P"), "{}"),
     ("app.preferences", "Preferences…", Some("Cmd+,"), "{}"),
@@ -157,7 +163,6 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
     ("app.qat", "Quick Access Toolbar", None, "{add: command id, params?, label?, icon?} | {remove: id, params?} | {reset: true} → [buttons]"),
     ("app.find", "Find…", Some("Cmd+F"), "{}"),
     ("app.replace", "Replace…", Some("Cmd+H"), "{}"),
-    ("app.links", "Community Links", None, "{}"),
 ];
 
 pub struct Perf {
@@ -177,7 +182,7 @@ struct AnimPreview {
     /// Where on the play-everything clock playback began (Play From the selected effect).
     from: f64,
     elapsed: f64,
-    timeline: deckcraft_anim::Timeline,
+    timeline: visionslide_anim::Timeline,
 }
 
 /// The app state a queued synthetic control-channel input is meant for.
@@ -318,7 +323,7 @@ pub struct SlideApp {
     /// Selection pane: folded groups, renaming, drag and drop.
     pub selpane: selpane::State,
     /// Arrange ▸ Align: Align to Slide (`true`) or Align Selected Objects, ticked for that selection.
-    pub(crate) align_to: Option<(Vec<deckcraft_model::ShapeId>, bool)>,
+    pub(crate) align_to: Option<(Vec<visionslide_model::ShapeId>, bool)>,
     /// View › New Window: a second window on one presentation. `None` when it is closed.
     pub doc_window: Option<doc_window::DocWindow>,
     /// Slide Sorter: folded sections, inline rename, dragging a whole section.

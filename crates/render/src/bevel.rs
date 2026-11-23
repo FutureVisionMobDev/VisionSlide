@@ -10,9 +10,9 @@
 
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
 use kurbo::{Affine, BezPath, Point, Rect};
 use vello_cpu::{Pixmap, RenderContext, peniko};
+use visionslide_color::Rgba;
 
 use crate::light::Lighting;
 

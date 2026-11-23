@@ -2,12 +2,12 @@
 
 use std::sync::Arc;
 
-use deckcraft_geom::{Affine, Point, Rect};
-use deckcraft_model::edit::{self as ed, Pos};
-use deckcraft_model::resolve::{self, Ctx};
-use deckcraft_model::text::{Align, AutoFit, Hyperlink, Paragraph, Run, RunKind, RunProps, TextBody};
-use deckcraft_model::{Presentation, Shape, ShapeId, ShapeKind};
 use serde_json::{Value, json};
+use visionslide_geom::{Affine, Point, Rect};
+use visionslide_model::edit::{self as ed, Pos};
+use visionslide_model::resolve::{self, Ctx};
+use visionslide_model::text::{Align, AutoFit, Hyperlink, Paragraph, Run, RunKind, RunProps, TextBody};
+use visionslide_model::{Presentation, Shape, ShapeId, ShapeKind};
 
 use super::{
     CommandSpec, NO_TEXT_POINT, SELECT_TEXT_OR_SHAPE, always, bad, bool_or, cmd, edit_shapes, has_doc, has_slide, has_text, id_param, ok, shape_of,
@@ -151,7 +151,7 @@ fn body_mut<'a>(doc: &'a mut Presentation, sel: &Selection, t: &TextSel) -> Opti
         return doc.slides.get_mut(sel.slide).map(|s| &mut Arc::make_mut(s).notes);
     }
     let shapes = crate::shapes_mut(doc, sel)?;
-    let sh = deckcraft_model::find_shape_mut(shapes, t.shape)?;
+    let sh = visionslide_model::find_shape_mut(shapes, t.shape)?;
     if let Some((r, c)) = t.cell {
         if let ShapeKind::Table(tb) = &mut sh.kind {
             return tb.cell_mut(r, c).map(|x| &mut x.text);

@@ -3,10 +3,10 @@
 
 use std::sync::Arc;
 
-use deckcraft_geom::{Affine, Point, Rect, Vec2, Xfrm};
-use deckcraft_model::{Shape, ShapeId, ShapeKind};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use visionslide_geom::{Affine, Point, Rect, Vec2, Xfrm};
+use visionslide_model::{Shape, ShapeId, ShapeKind};
 
 use crate::cmd::{self, xfrm_of};
 use crate::{HistoryEntry, Result, Session, TextSel};
@@ -74,7 +74,7 @@ pub enum ToolKind {
     /// Ink: pen (`pen`, `highlighter`) or `eraser`.
     Ink {
         mode: String,
-        color: deckcraft_color::Rgba,
+        color: visionslide_color::Rgba,
         width: f64,
     },
 }
@@ -310,7 +310,7 @@ impl ToolState {
         self.edit_points.filter(|id| {
             st.selection.shapes.as_slice() == [*id]
                 && st.selection.text.is_none()
-                && st.shape(*id).is_some_and(|sh| matches!(sh.geom, deckcraft_model::Geom::Custom { .. }))
+                && st.shape(*id).is_some_and(|sh| matches!(sh.geom, visionslide_model::Geom::Custom { .. }))
         })
     }
 
@@ -334,22 +334,22 @@ pub fn box_handles(x: &Xfrm) -> ([Point; 8], Point) {
 }
 
 /// WordArt adjust handles for `sh`, in shape-local points (the text rectangle). Empty when the
-/// resolved body has no warp DeckCraft draws, or the shape has no text to store one on.
+/// resolved body has no warp VisionSlide draws, or the shape has no text to store one on.
 pub fn wordart_handles(
-    doc: &deckcraft_model::Presentation,
+    doc: &visionslide_model::Presentation,
     sel: &crate::Selection,
     sh: &Shape,
     w: f64,
     h: f64,
-) -> Vec<deckcraft_geom::warp::WarpHandle> {
+) -> Vec<visionslide_geom::warp::WarpHandle> {
     if sh.text.is_none() {
         return Vec::new();
     }
     let Some(ctx) = crate::cmd::text::ctx_for(doc, sel) else { return Vec::new() };
-    let bp = deckcraft_model::resolve::body(&ctx, sh);
-    let Some(name) = bp.warp.as_deref().filter(|n| deckcraft_geom::warp::is_supported(n)) else { return Vec::new() };
-    let tr = deckcraft_render::shape_geometry(sh, w, h).text_rect;
-    deckcraft_geom::warp::handles(name, &bp.warp_adj, tr)
+    let bp = visionslide_model::resolve::body(&ctx, sh);
+    let Some(name) = bp.warp.as_deref().filter(|n| visionslide_geom::warp::is_supported(n)) else { return Vec::new() };
+    let tr = visionslide_render::shape_geometry(sh, w, h).text_rect;
+    visionslide_geom::warp::handles(name, &bp.warp_adj, tr)
 }
 
 /// Write one warp adjust, keeping the others from `base` (empty = the preset defaults).
@@ -358,7 +358,7 @@ fn set_warp_adj(sh: &mut Shape, name: &str, base: &[f64], index: usize, value: f
     if !value.is_finite() || index > 7 {
         return;
     }
-    let defaults = deckcraft_geom::warp::adjust_defaults(name);
+    let defaults = visionslide_geom::warp::adjust_defaults(name);
     let n = defaults.len().max(index + 1).min(8);
     if n == 0 {
         return;

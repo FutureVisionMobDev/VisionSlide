@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=VisionSlide
+GenericName=Presentation
+Comment=Create and present slide decks
+Exec=visionslide %F
+TryExec=visionslide
+Icon=com.visionoffice.visionslide
+Terminal=false
+StartupNotify=true
+StartupWMClass=com.visionoffice.visionslide
+Categories=Office;Presentation;
+MimeType=application/x-visionslide;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.openxmlformats-officedocument.presentationml.template;application/vnd.openxmlformats-officedocument.presentationml.slideshow;application/vnd.ms-powerpoint;
+Keywords=presentation;slides;slide show;deck;pptx;keynote;powerpoint;

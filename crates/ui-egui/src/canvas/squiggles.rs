@@ -10,9 +10,9 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender, channel};
 
-use deckcraft_engine::DocState;
-use deckcraft_geom::Point;
-use deckcraft_model::{Paragraph, ShapeId};
+use visionslide_engine::DocState;
+use visionslide_geom::Point;
+use visionslide_model::{Paragraph, ShapeId};
 
 /// Milliseconds of checking per frame on the UI thread (the web build).
 pub const FRAME_BUDGET_MS: f64 = 4.0;
@@ -107,10 +107,9 @@ impl Checker {
             while *at < job.paras.len() {
                 let (tag, p) = &job.paras[*at];
                 let k = hash_of(&(serde_json::to_string(&p.runs).unwrap_or_default(), &job.default_lang));
-                let r = self
-                    .cache
-                    .entry(k)
-                    .or_insert_with(|| deckcraft_engine::spell::misspelt(p, &job.default_lang, &[]).into_iter().map(|w| (w.start, w.end)).collect());
+                let r = self.cache.entry(k).or_insert_with(|| {
+                    visionslide_engine::spell::misspelt(p, &job.default_lang, &[]).into_iter().map(|w| (w.start, w.end)).collect()
+                });
                 found.extend(r.iter().map(|(a, b)| (*tag, *a, *b)));
                 *at += 1;
                 if now_ms() - t0 > budget_ms {
@@ -154,7 +153,7 @@ fn worker(rx: Receiver<Job>, tx: Sender<Done>) {
 fn default_lang(st: &DocState) -> String {
     for sl in &st.doc.slides {
         let mut found = None;
-        deckcraft_model::walk(&sl.shapes, &mut |sh, _| {
+        visionslide_model::walk(&sl.shapes, &mut |sh, _| {
             if found.is_none()
                 && let Some(t) = &sh.text
             {
@@ -257,9 +256,9 @@ pub fn display_lang_name(ctx: &egui::Context, tag: &str) -> String {
 
 /// The flagged word (misspelt or repeated) of `pp` starting at `start`, with what the menu offers.
 pub fn menu_word(pp: &Paragraph, default: &str, tag: Tag, start: usize) -> Option<MenuWord> {
-    let w = deckcraft_engine::spell::misspelt(pp, default, &[]).into_iter().find(|w| w.start == start)?;
+    let w = visionslide_engine::spell::misspelt(pp, default, &[]).into_iter().find(|w| w.start == start)?;
     let suggestions =
-        if w.repeated.is_some() { vec![] } else { deckcraft_engine::spell::dictionary(&w.lang).map(|d| d.suggest(&w.text, 5)).unwrap_or_default() };
+        if w.repeated.is_some() { vec![] } else { visionslide_engine::spell::dictionary(&w.lang).map(|d| d.suggest(&w.text, 5)).unwrap_or_default() };
     Some(MenuWord { tag, start, word: w.text, suggestions, delete_from: w.repeated })
 }
 
@@ -336,18 +335,20 @@ impl Squiggles {
             return vec![];
         }
         self.receive(FRAME_BUDGET_MS);
-        let key =
-            Key { of: hash_of(&(Arc::as_ptr(&st.doc) as usize, st.revision, st.selection.slide)), user: deckcraft_engine::spell::user_generation() };
+        let key = Key {
+            of: hash_of(&(Arc::as_ptr(&st.doc) as usize, st.revision, st.selection.slide)),
+            user: visionslide_engine::spell::user_generation(),
+        };
         let paras = || {
             let mut paras = vec![];
             if let Some(sl) = st.doc.slides.get(st.selection.slide) {
-                deckcraft_model::walk(&sl.shapes, &mut |sh, _| {
+                visionslide_model::walk(&sl.shapes, &mut |sh, _| {
                     if let Some(t) = &sh.text {
                         for (i, p) in t.paragraphs.iter().enumerate() {
                             paras.push((Tag::Shape { id: sh.id, para: i }, p.clone()));
                         }
                     }
-                    if let deckcraft_model::ShapeKind::Table(tb) = &sh.kind {
+                    if let visionslide_model::ShapeKind::Table(tb) = &sh.kind {
                         for (r, row) in tb.rows.iter().enumerate() {
                             for (c, cell) in row.cells.iter().enumerate() {
                                 if cell.is_covered() {
@@ -369,8 +370,8 @@ impl Squiggles {
             self.lines.clear();
             for &(tag, a, b) in &d.ranges {
                 let under = match tag {
-                    Tag::Shape { id, para } => deckcraft_engine::cmd::text::range_underlines(st, id, &[(para, a, b)]),
-                    Tag::Cell { id, row, col, para } => deckcraft_engine::cmd::text::cell_range_underlines(st, id, row, col, &[(para, a, b)]),
+                    Tag::Shape { id, para } => visionslide_engine::cmd::text::range_underlines(st, id, &[(para, a, b)]),
+                    Tag::Cell { id, row, col, para } => visionslide_engine::cmd::text::cell_range_underlines(st, id, row, col, &[(para, a, b)]),
                     Tag::Notes { .. } => vec![],
                 };
                 self.lines.extend(under.into_iter().map(|(p, q)| ((tag, a, b), p, q)));
@@ -404,7 +405,7 @@ impl Squiggles {
             return vec![];
         }
         self.receive(FRAME_BUDGET_MS);
-        let key = Key { of: hash_of(&(text, lang)), user: deckcraft_engine::spell::user_generation() };
+        let key = Key { of: hash_of(&(text, lang)), user: visionslide_engine::spell::user_generation() };
         let paras = || {
             let mut out = vec![];
             let mut start = 0;
@@ -474,9 +475,9 @@ impl Squiggles {
 fn paragraph_of(st: &DocState, tag: Tag) -> Option<Paragraph> {
     let sl = st.doc.slides.get(st.selection.slide)?;
     match tag {
-        Tag::Shape { id, para } => deckcraft_model::find_shape(&sl.shapes, id)?.text.as_ref()?.paragraphs.get(para).cloned(),
-        Tag::Cell { id, row, col, para } => match &deckcraft_model::find_shape(&sl.shapes, id)?.kind {
-            deckcraft_model::ShapeKind::Table(tb) => tb.cell(row, col)?.text.paragraphs.get(para).cloned(),
+        Tag::Shape { id, para } => visionslide_model::find_shape(&sl.shapes, id)?.text.as_ref()?.paragraphs.get(para).cloned(),
+        Tag::Cell { id, row, col, para } => match &visionslide_model::find_shape(&sl.shapes, id)?.kind {
+            visionslide_model::ShapeKind::Table(tb) => tb.cell(row, col)?.text.paragraphs.get(para).cloned(),
             _ => None,
         },
         Tag::Notes { .. } => None,

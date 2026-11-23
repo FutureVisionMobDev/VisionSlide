@@ -1,17 +1,17 @@
 [package]
-name = "deckcraft-model"
+name = "visionslide-model"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft document model: presentations, masters, layouts, slides, shapes, text, themes, transitions, animations"
+description = "VisionSlide document model: presentations, masters, layouts, slides, shapes, text, themes, transitions, animations"
 
 [lints]
 workspace = true
 
 [dependencies]
 craft-drawingml = { workspace = true }
-deckcraft-geom = { workspace = true }
-deckcraft-color = { workspace = true }
+visionslide-geom = { workspace = true }
+visionslide-color = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

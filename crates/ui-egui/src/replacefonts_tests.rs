@@ -1,9 +1,9 @@
 //! Home › Replace Fonts…: the dialog lists the deck's fonts and replaces one, as one undo step.
 
-use deckcraft_engine::Session;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use serde_json::json;
+use visionslide_engine::Session;
 
 use crate::{Services, SlideApp};
 

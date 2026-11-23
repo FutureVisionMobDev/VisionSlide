@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use deckcraft_model::text::RunKind;
-use deckcraft_model::{Paragraph, Shape, ShapeKind, Slide, TextBody};
 use serde_json::{Value, json};
+use visionslide_model::text::RunKind;
+use visionslide_model::{Paragraph, Shape, ShapeKind, Slide, TextBody};
 
 use super::{CommandSpec, bad, bool_or, cmd, has_doc, str_param};
 use crate::{Result, Session};
@@ -208,7 +208,7 @@ fn replace(s: &mut Session, p: &Value) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deckcraft_model::{Run, RunProps};
+    use visionslide_model::{Run, RunProps};
 
     fn opts(t: &str, case: bool, whole: bool) -> Opts {
         Opts { pat: t.chars().collect(), case, whole }

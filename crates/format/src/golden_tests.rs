@@ -1,20 +1,20 @@
-//! Byte-for-byte checks on the `.deckcraft` package. The files in `tests/golden` were written by
+//! Byte-for-byte checks on the `.visionslide` package. The files in `tests/golden` were written by
 //! the format code as it was before the package layer moved to `craft-deckcraft-format`
 //! (storytold/craft-libs). A save of the same deck must give the same bytes, and a load must give
 //! the same presentation and the same damage report.
-//! `DECKCRAFT_BLESS_GOLDEN=1` rewrites them. Only do that for a deliberate format change.
+//! `VISIONSLIDE_BLESS_GOLDEN=1` rewrites them. Only do that for a deliberate format change.
 
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use deckcraft_model::chart::{Chart, ChartPart, ChartType};
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{MediaId, MediaItem, Presentation, Shape, ShapeId, ShapeKind, Xfrm, defaults};
+use visionslide_model::chart::{Chart, ChartPart, ChartType};
+use visionslide_model::text::TextBody;
+use visionslide_model::{MediaId, MediaItem, Presentation, Shape, ShapeId, ShapeKind, Xfrm, defaults};
 
 use super::{load_checked, save_as};
 
 /// A fixed generator, so the golden bytes don't change with the app's version.
-const GENERATOR: &str = "DeckCraft golden";
+const GENERATOR: &str = "VisionSlide golden";
 
 fn golden(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests").join("golden").join(name)
@@ -81,7 +81,7 @@ fn loaded_json(bytes: &[u8], with_model: bool) -> String {
 
 fn check(name: &str, actual: &[u8]) {
     let path = golden(name);
-    if std::env::var_os("DECKCRAFT_BLESS_GOLDEN").is_some() {
+    if std::env::var_os("VISIONSLIDE_BLESS_GOLDEN").is_some() {
         std::fs::write(&path, actual).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
         return;
     }
@@ -92,19 +92,19 @@ fn check(name: &str, actual: &[u8]) {
 #[test]
 fn a_save_writes_the_golden_package_bytes() {
     let bytes = save_as(&deck(), GENERATOR).unwrap_or_else(|e| panic!("save: {e}"));
-    check("deck.deckcraft", &bytes);
+    check("deck.visionslide", &bytes);
 }
 
 #[test]
 fn a_load_of_the_golden_package_gives_the_golden_presentation() {
-    let bytes = std::fs::read(golden("deck.deckcraft")).unwrap_or_else(|e| panic!("{e}"));
+    let bytes = std::fs::read(golden("deck.visionslide")).unwrap_or_else(|e| panic!("{e}"));
     check("deck.loaded.json", loaded_json(&bytes, true).as_bytes());
 }
 
 #[test]
 fn a_load_of_a_damaged_package_gives_the_golden_report() {
     // The PNG member and the second chart part removed: both are reported, nothing is refused.
-    let bytes = std::fs::read(golden("deck.deckcraft")).unwrap_or_else(|e| panic!("{e}"));
+    let bytes = std::fs::read(golden("deck.visionslide")).unwrap_or_else(|e| panic!("{e}"));
     let mut z = zip::ZipArchive::new(std::io::Cursor::new(bytes.as_slice())).unwrap_or_else(|e| panic!("{e}"));
     let mut out = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
     for i in 0..z.len() {

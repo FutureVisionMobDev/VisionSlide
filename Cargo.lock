@@ -1267,282 +1267,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c87e182de0887fd5361989c677c4e8f5000cd9491d6d563161a8f3a5519fc7f"
 
 [[package]]
-name = "deckcraft"
-version = "0.19.0"
-dependencies = [
- "arboard",
- "chrono",
- "cpal",
- "craft-update",
- "deckcraft-engine",
- "deckcraft-media",
- "deckcraft-ui-egui",
- "eframe",
- "egui",
- "fmv-macos-events",
- "image",
- "log",
- "rfd",
- "serde_json",
- "winit",
- "winresource",
-]
-
-[[package]]
-name = "deckcraft-anim"
-version = "0.19.0"
-dependencies = [
- "deckcraft-geom",
- "deckcraft-model",
- "serde",
-]
-
-[[package]]
-name = "deckcraft-cli"
-version = "0.19.0"
-dependencies = [
- "deckcraft-engine",
- "deckcraft-mcp",
- "serde_json",
- "zip 3.0.0",
-]
-
-[[package]]
-name = "deckcraft-color"
-version = "0.19.0"
-dependencies = [
- "craft-drawingml",
-]
-
-[[package]]
-name = "deckcraft-engine"
-version = "0.19.0"
-dependencies = [
- "chrono",
- "craft-mime",
- "deckcraft-anim",
- "deckcraft-color",
- "deckcraft-fonts",
- "deckcraft-format",
- "deckcraft-geom",
- "deckcraft-media",
- "deckcraft-model",
- "deckcraft-pdf",
- "deckcraft-ppt",
- "deckcraft-pptx",
- "deckcraft-render",
- "deckcraft-text",
- "i_overlay",
- "image",
- "js-sys",
- "log",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "zip 3.0.0",
-]
-
-[[package]]
-name = "deckcraft-fonts"
-version = "0.19.0"
-dependencies = [
- "epaint_default_fonts",
- "harfrust 0.13.3",
- "kurbo",
- "log",
- "skrifa 0.47.0",
- "unicode-bidi",
-]
-
-[[package]]
-name = "deckcraft-format"
-version = "0.19.0"
-dependencies = [
- "craft-deckcraft-format",
- "craft-rtf",
- "deckcraft-model",
- "serde_json",
- "zip 3.0.0",
-]
-
-[[package]]
-name = "deckcraft-geom"
-version = "0.19.0"
-dependencies = [
- "craft-drawingml",
- "kurbo",
- "serde",
-]
-
-[[package]]
-name = "deckcraft-mcp"
-version = "0.19.0"
-dependencies = [
- "craft-mcp-server",
- "deckcraft-engine",
- "deckcraft-render",
- "log",
- "serde_json",
-]
-
-[[package]]
-name = "deckcraft-media"
-version = "0.19.0"
-dependencies = [
- "craft-audio",
- "craft-media",
- "craft-video",
- "image",
- "log",
- "symphonia",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "deckcraft-model"
-version = "0.19.0"
-dependencies = [
- "craft-drawingml",
- "deckcraft-color",
- "deckcraft-geom",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "unicode-segmentation",
-]
-
-[[package]]
-name = "deckcraft-pdf"
-version = "0.19.0"
-dependencies = [
- "craft-pdf",
- "deckcraft-fonts",
- "deckcraft-model",
- "deckcraft-render",
- "deckcraft-text",
- "hayro-syntax",
- "krilla",
- "kurbo",
- "log",
- "serde",
- "thiserror 2.0.21",
- "wasm-bindgen-test",
-]
-
-[[package]]
-name = "deckcraft-ppt"
-version = "0.19.0"
-dependencies = [
- "deckcraft-color",
- "deckcraft-engine",
- "deckcraft-geom",
- "deckcraft-model",
- "image",
- "log",
- "miniz_oxide 0.9.1",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "deckcraft-pptx"
-version = "0.19.0"
-dependencies = [
- "craft-cfb",
- "craft-drawingml",
- "craft-opc",
- "craft-pptx",
- "craft-xml",
- "deckcraft-color",
- "deckcraft-engine",
- "deckcraft-geom",
- "deckcraft-model",
- "image",
- "quick-xml 0.41.0",
- "serde_json",
- "thiserror 2.0.21",
- "zip 3.0.0",
-]
-
-[[package]]
-name = "deckcraft-render"
-version = "0.19.0"
-dependencies = [
- "craft-metafile",
- "deckcraft-anim",
- "deckcraft-color",
- "deckcraft-fonts",
- "deckcraft-geom",
- "deckcraft-model",
- "deckcraft-text",
- "image",
- "kurbo",
- "log",
- "skrifa 0.47.0",
- "vello_common",
- "vello_cpu",
-]
-
-[[package]]
-name = "deckcraft-text"
-version = "0.19.0"
-dependencies = [
- "chrono",
- "deckcraft-color",
- "deckcraft-fonts",
- "deckcraft-geom",
- "deckcraft-model",
- "unicode-bidi",
- "unicode-linebreak",
- "unicode-segmentation",
-]
-
-[[package]]
-name = "deckcraft-ui-egui"
-version = "0.19.0"
-dependencies = [
- "craft-ui",
- "craft-update",
- "deckcraft-anim",
- "deckcraft-color",
- "deckcraft-engine",
- "deckcraft-fonts",
- "deckcraft-geom",
- "deckcraft-media",
- "deckcraft-model",
- "deckcraft-render",
- "deckcraft-text",
- "egui",
- "egui_extras",
- "egui_kittest",
- "log",
- "serde",
- "serde_json",
- "skrifa 0.47.0",
- "toml",
- "web-time",
-]
-
-[[package]]
-name = "deckcraft-web"
-version = "0.19.0"
-dependencies = [
- "craft-web-api",
- "craft-web-host",
- "deckcraft-engine",
- "deckcraft-ui-egui",
- "eframe",
- "egui",
- "js-sys",
- "log",
- "rfd",
- "serde_json",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
 name = "deranged"
 version = "0.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5724,6 +5448,282 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "visionslide"
+version = "0.19.0"
+dependencies = [
+ "arboard",
+ "chrono",
+ "cpal",
+ "craft-update",
+ "eframe",
+ "egui",
+ "fmv-macos-events",
+ "image",
+ "log",
+ "rfd",
+ "serde_json",
+ "visionslide-engine",
+ "visionslide-media",
+ "visionslide-ui-egui",
+ "winit",
+ "winresource",
+]
+
+[[package]]
+name = "visionslide-anim"
+version = "0.19.0"
+dependencies = [
+ "serde",
+ "visionslide-geom",
+ "visionslide-model",
+]
+
+[[package]]
+name = "visionslide-cli"
+version = "0.19.0"
+dependencies = [
+ "serde_json",
+ "visionslide-engine",
+ "visionslide-mcp",
+ "zip 3.0.0",
+]
+
+[[package]]
+name = "visionslide-color"
+version = "0.19.0"
+dependencies = [
+ "craft-drawingml",
+]
+
+[[package]]
+name = "visionslide-engine"
+version = "0.19.0"
+dependencies = [
+ "chrono",
+ "craft-mime",
+ "i_overlay",
+ "image",
+ "js-sys",
+ "log",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "visionslide-anim",
+ "visionslide-color",
+ "visionslide-fonts",
+ "visionslide-format",
+ "visionslide-geom",
+ "visionslide-media",
+ "visionslide-model",
+ "visionslide-pdf",
+ "visionslide-ppt",
+ "visionslide-pptx",
+ "visionslide-render",
+ "visionslide-text",
+ "zip 3.0.0",
+]
+
+[[package]]
+name = "visionslide-fonts"
+version = "0.19.0"
+dependencies = [
+ "epaint_default_fonts",
+ "harfrust 0.13.3",
+ "kurbo",
+ "log",
+ "skrifa 0.47.0",
+ "unicode-bidi",
+]
+
+[[package]]
+name = "visionslide-format"
+version = "0.19.0"
+dependencies = [
+ "craft-deckcraft-format",
+ "craft-rtf",
+ "serde_json",
+ "visionslide-model",
+ "zip 3.0.0",
+]
+
+[[package]]
+name = "visionslide-geom"
+version = "0.19.0"
+dependencies = [
+ "craft-drawingml",
+ "kurbo",
+ "serde",
+]
+
+[[package]]
+name = "visionslide-mcp"
+version = "0.19.0"
+dependencies = [
+ "craft-mcp-server",
+ "log",
+ "serde_json",
+ "visionslide-engine",
+ "visionslide-render",
+]
+
+[[package]]
+name = "visionslide-media"
+version = "0.19.0"
+dependencies = [
+ "craft-audio",
+ "craft-media",
+ "craft-video",
+ "image",
+ "log",
+ "symphonia",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "visionslide-model"
+version = "0.19.0"
+dependencies = [
+ "craft-drawingml",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "unicode-segmentation",
+ "visionslide-color",
+ "visionslide-geom",
+]
+
+[[package]]
+name = "visionslide-pdf"
+version = "0.19.0"
+dependencies = [
+ "craft-pdf",
+ "hayro-syntax",
+ "krilla",
+ "kurbo",
+ "log",
+ "serde",
+ "thiserror 2.0.21",
+ "visionslide-fonts",
+ "visionslide-model",
+ "visionslide-render",
+ "visionslide-text",
+ "wasm-bindgen-test",
+]
+
+[[package]]
+name = "visionslide-ppt"
+version = "0.19.0"
+dependencies = [
+ "image",
+ "log",
+ "miniz_oxide 0.9.1",
+ "serde_json",
+ "thiserror 2.0.21",
+ "visionslide-color",
+ "visionslide-engine",
+ "visionslide-geom",
+ "visionslide-model",
+]
+
+[[package]]
+name = "visionslide-pptx"
+version = "0.19.0"
+dependencies = [
+ "craft-cfb",
+ "craft-drawingml",
+ "craft-opc",
+ "craft-pptx",
+ "craft-xml",
+ "image",
+ "quick-xml 0.41.0",
+ "serde_json",
+ "thiserror 2.0.21",
+ "visionslide-color",
+ "visionslide-engine",
+ "visionslide-geom",
+ "visionslide-model",
+ "zip 3.0.0",
+]
+
+[[package]]
+name = "visionslide-render"
+version = "0.19.0"
+dependencies = [
+ "craft-metafile",
+ "image",
+ "kurbo",
+ "log",
+ "skrifa 0.47.0",
+ "vello_common",
+ "vello_cpu",
+ "visionslide-anim",
+ "visionslide-color",
+ "visionslide-fonts",
+ "visionslide-geom",
+ "visionslide-model",
+ "visionslide-text",
+]
+
+[[package]]
+name = "visionslide-text"
+version = "0.19.0"
+dependencies = [
+ "chrono",
+ "unicode-bidi",
+ "unicode-linebreak",
+ "unicode-segmentation",
+ "visionslide-color",
+ "visionslide-fonts",
+ "visionslide-geom",
+ "visionslide-model",
+]
+
+[[package]]
+name = "visionslide-ui-egui"
+version = "0.19.0"
+dependencies = [
+ "craft-ui",
+ "craft-update",
+ "egui",
+ "egui_extras",
+ "egui_kittest",
+ "log",
+ "serde",
+ "serde_json",
+ "skrifa 0.47.0",
+ "toml",
+ "visionslide-anim",
+ "visionslide-color",
+ "visionslide-engine",
+ "visionslide-fonts",
+ "visionslide-geom",
+ "visionslide-media",
+ "visionslide-model",
+ "visionslide-render",
+ "visionslide-text",
+ "web-time",
+]
+
+[[package]]
+name = "visionslide-web"
+version = "0.19.0"
+dependencies = [
+ "craft-web-api",
+ "craft-web-host",
+ "eframe",
+ "egui",
+ "js-sys",
+ "log",
+ "rfd",
+ "serde_json",
+ "visionslide-engine",
+ "visionslide-ui-egui",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
 
 [[package]]
 name = "walkdir"

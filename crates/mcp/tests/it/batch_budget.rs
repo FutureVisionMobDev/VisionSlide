@@ -1,8 +1,8 @@
 //! A batch (JSON-RPC or the `batch` tool) is bounded in entries and in the bytes of results it
 //! gathers, so a short request cannot copy a large document into memory hundreds of times.
 
-use deckcraft_mcp::{Headless, Server};
 use serde_json::{Value, json};
+use visionslide_mcp::{Headless, Server};
 
 fn server_with_notes(bytes: usize) -> Server {
     let mut server = Server::new(Box::new(Headless::with_document()));

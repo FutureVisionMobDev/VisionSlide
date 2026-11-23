@@ -1,21 +1,21 @@
 [package]
-name = "deckcraft-render"
+name = "visionslide-render"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft renderer: slides, layouts and masters to pixels (vello_cpu): fills, outlines, effects, pictures, text, tables, charts"
+description = "VisionSlide renderer: slides, layouts and masters to pixels (vello_cpu): fills, outlines, effects, pictures, text, tables, charts"
 
 [lints]
 workspace = true
 
 [dependencies]
-deckcraft-geom = { workspace = true }
-deckcraft-color = { workspace = true }
+visionslide-geom = { workspace = true }
+visionslide-color = { workspace = true }
 craft-metafile = { workspace = true }
-deckcraft-model = { workspace = true }
-deckcraft-anim = { workspace = true }
-deckcraft-fonts = { workspace = true }
-deckcraft-text = { workspace = true }
+visionslide-model = { workspace = true }
+visionslide-anim = { workspace = true }
+visionslide-fonts = { workspace = true }
+visionslide-text = { workspace = true }
 vello_cpu = { workspace = true }
 vello_common = { workspace = true }
 image = { workspace = true }

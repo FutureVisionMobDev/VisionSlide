@@ -1,6 +1,6 @@
 //! The folders automation may read and write.
 //!
-//! `deckcraft-cli mcp --automation-read-root <dir> --automation-write-root <dir>` confines the
+//! `visionslide-cli mcp --automation-read-root <dir> --automation-write-root <dir>` confines the
 //! files an agent's commands reach. [`AutomationRoots`] holds the two folders. While they are in force, every path a command
 //! reads goes through [`check_read`] and every path it writes through [`check_write`]:
 //!
@@ -13,7 +13,7 @@
 //! - Read and write access are separate: a root given alone grants only its own kind of access.
 //!
 //! Roots are in force on a thread inside [`confine`], and in the whole process after
-//! [`confine_process`] (`deckcraft-cli mcp`), except inside [`unconfined`]. Without roots
+//! [`confine_process`] (`visionslide-cli mcp`), except inside [`unconfined`]. Without roots
 //! nothing is checked.
 //!
 //! A path is checked, then opened: a process that can change the folders in between (swapping in
@@ -276,8 +276,8 @@ mod tests {
         for d in ["in/sub", "out", "outside", "in2"] {
             std::fs::create_dir_all(base.join(d)).unwrap();
         }
-        std::fs::write(base.join("in/a.deckcraft"), "x").unwrap();
-        std::fs::write(base.join("outside/secret.deckcraft"), "x").unwrap();
+        std::fs::write(base.join("in/a.visionslide"), "x").unwrap();
+        std::fs::write(base.join("outside/secret.visionslide"), "x").unwrap();
         let roots = AutomationRoots::new(&[base.join("in")], &[base.join("out")]).unwrap().unwrap();
         (base, roots)
     }
@@ -289,14 +289,14 @@ mod tests {
     #[test]
     fn paths_inside_the_roots_pass_and_others_dont() {
         let (base, roots) = folders("inside");
-        assert_eq!(roots.check(&s(base.join("in/a.deckcraft")), Access::Read), Ok(()));
+        assert_eq!(roots.check(&s(base.join("in/a.visionslide")), Access::Read), Ok(()));
         assert_eq!(roots.check(&s(base.join("in")), Access::Read), Ok(()), "the root itself");
-        assert_eq!(roots.check(&s(base.join("in/sub/new.deckcraft")), Access::Read), Ok(()), "missing files are checked by their folder");
+        assert_eq!(roots.check(&s(base.join("in/sub/new.visionslide")), Access::Read), Ok(()), "missing files are checked by their folder");
         assert_eq!(roots.check(&s(base.join("out/new/deeper/x.png")), Access::Write), Ok(()), "and by their nearest folder");
-        let e = roots.check(&s(base.join("outside/secret.deckcraft")), Access::Read).unwrap_err();
+        let e = roots.check(&s(base.join("outside/secret.visionslide")), Access::Read).unwrap_err();
         assert!(e.starts_with("automation path rejected: outside the read root"), "{e}");
         // Read and write access are separate.
-        let e = roots.check(&s(base.join("in/a.deckcraft")), Access::Write).unwrap_err();
+        let e = roots.check(&s(base.join("in/a.visionslide")), Access::Write).unwrap_err();
         assert!(e.contains("outside the write root"), "{e}");
         assert!(roots.check(&s(base.join("out/x.png")), Access::Read).unwrap_err().contains("outside the read root"));
         let _ = std::fs::remove_dir_all(base);
@@ -306,19 +306,19 @@ mod tests {
     fn any_configured_root_grants_access() {
         let (base, _) = folders("multiple");
         let roots = AutomationRoots::new(&[base.join("in"), base.join("in2")], &[base.join("out"), base.join("outside")]).unwrap().unwrap();
-        assert_eq!(roots.check(&s(base.join("in/a.deckcraft")), Access::Read), Ok(()));
-        assert_eq!(roots.check(&s(base.join("in2/b.deckcraft")), Access::Read), Ok(()));
-        assert_eq!(roots.check(&s(base.join("out/new.deckcraft")), Access::Write), Ok(()));
-        assert_eq!(roots.check(&s(base.join("outside/new.deckcraft")), Access::Write), Ok(()));
+        assert_eq!(roots.check(&s(base.join("in/a.visionslide")), Access::Read), Ok(()));
+        assert_eq!(roots.check(&s(base.join("in2/b.visionslide")), Access::Read), Ok(()));
+        assert_eq!(roots.check(&s(base.join("out/new.visionslide")), Access::Write), Ok(()));
+        assert_eq!(roots.check(&s(base.join("outside/new.visionslide")), Access::Write), Ok(()));
         let _ = std::fs::remove_dir_all(base);
     }
 
     #[test]
     fn a_sibling_with_the_same_prefix_is_outside() {
         let (base, roots) = folders("prefix");
-        std::fs::write(base.join("in2/b.deckcraft"), "x").unwrap();
-        assert!(roots.check(&s(base.join("in2/b.deckcraft")), Access::Read).is_err(), "in2 is not inside in");
-        assert!(roots.check(&format!("{}2/c.deckcraft", s(base.join("in"))), Access::Read).is_err());
+        std::fs::write(base.join("in2/b.visionslide"), "x").unwrap();
+        assert!(roots.check(&s(base.join("in2/b.visionslide")), Access::Read).is_err(), "in2 is not inside in");
+        assert!(roots.check(&format!("{}2/c.visionslide", s(base.join("in"))), Access::Read).is_err());
         let _ = std::fs::remove_dir_all(base);
     }
 
@@ -326,11 +326,11 @@ mod tests {
     fn parent_traversal_is_resolved_or_refused() {
         let (base, roots) = folders("dotdot");
         let sep = std::path::MAIN_SEPARATOR;
-        let up = format!("{}{sep}..{sep}outside{sep}secret.deckcraft", s(base.join("in")));
+        let up = format!("{}{sep}..{sep}outside{sep}secret.visionslide", s(base.join("in")));
         assert!(roots.check(&up, Access::Read).unwrap_err().contains("outside the read root"), "`..` out of the root");
-        let back = format!("{}{sep}..{sep}a.deckcraft", s(base.join("in/sub")));
+        let back = format!("{}{sep}..{sep}a.visionslide", s(base.join("in/sub")));
         assert_eq!(roots.check(&back, Access::Read), Ok(()), "`..` that stays inside");
-        let missing = format!("{}{sep}nope{sep}..{sep}..{sep}outside{sep}x.deckcraft", s(base.join("out")));
+        let missing = format!("{}{sep}nope{sep}..{sep}..{sep}outside{sep}x.visionslide", s(base.join("out")));
         let e = roots.check(&missing, Access::Write).unwrap_err();
         // Windows resolves `..` by name first (so does opening the file there): then it's outside.
         assert!(e.contains("parent traversal below a folder that doesn't exist") || e.contains("outside the write root"), "{e}");
@@ -341,7 +341,7 @@ mod tests {
     fn relative_paths_resolve_against_the_working_directory() {
         let (base, roots) = folders("relative");
         // The tests' working directory is the crate's folder: not inside the roots.
-        assert!(roots.check("a.deckcraft", Access::Read).unwrap_err().contains("outside the read root"));
+        assert!(roots.check("a.visionslide", Access::Read).unwrap_err().contains("outside the read root"));
         assert!(roots.check("", Access::Read).unwrap_err().contains("path is empty"));
         let _ = std::fs::remove_dir_all(base);
     }
@@ -351,7 +351,7 @@ mod tests {
         let (base, _) = folders("missing");
         let e = AutomationRoots::new(&[base.join("nope")], &[]).unwrap_err();
         assert!(e.starts_with("cannot open the automation read root"), "{e}");
-        let e = AutomationRoots::new(&[], &[base.join("in/a.deckcraft")]).unwrap_err();
+        let e = AutomationRoots::new(&[], &[base.join("in/a.visionslide")]).unwrap_err();
         assert!(
             e.starts_with("cannot open the automation write root")
                 && e.ends_with(&std::io::Error::from(std::io::ErrorKind::NotADirectory).to_string()),
@@ -361,7 +361,7 @@ mod tests {
         assert!(AutomationRoots::new(&[], &[]).unwrap().is_none());
         // One root alone grants only its own access.
         let read_only = AutomationRoots::new(&[base.join("in")], &[]).unwrap().unwrap();
-        let e = read_only.check(&s(base.join("in/x.deckcraft")), Access::Write).unwrap_err();
+        let e = read_only.check(&s(base.join("in/x.visionslide")), Access::Write).unwrap_err();
         assert!(e.contains("write authority is absent"), "{e}");
         let _ = std::fs::remove_dir_all(base);
     }
@@ -381,25 +381,25 @@ mod tests {
         #[cfg(not(any(unix, windows)))]
         let made = |_: &Path, _: &Path| false;
         // Windows needs Developer Mode or elevation to make links: nothing to test without them.
-        if !made(&base.join("outside/secret.deckcraft"), &base.join("in/leak.deckcraft")) {
+        if !made(&base.join("outside/secret.visionslide"), &base.join("in/leak.visionslide")) {
             eprintln!("skipped: symbolic links can't be made here");
             let _ = std::fs::remove_dir_all(base);
             return;
         }
-        assert!(roots.check(&s(base.join("in/leak.deckcraft")), Access::Read).unwrap_err().contains("outside the read root"), "a file link out");
+        assert!(roots.check(&s(base.join("in/leak.visionslide")), Access::Read).unwrap_err().contains("outside the read root"), "a file link out");
         assert!(made(&base.join("outside"), &base.join("out/away")));
         let e = roots.check(&s(base.join("out/away/new.png")), Access::Write).unwrap_err();
         assert!(e.contains("outside the write root"), "a folder link out: {e}");
-        assert!(made(&base.join("outside/gone.deckcraft"), &base.join("out/dangling.png")));
+        assert!(made(&base.join("outside/gone.visionslide"), &base.join("out/dangling.png")));
         let e = roots.check(&s(base.join("out/dangling.png")), Access::Write).unwrap_err();
         assert!(e.contains("a link that leads nowhere"), "writing would create the file outside: {e}");
         // A link to a folder inside the root stays inside.
         assert!(made(&base.join("in/sub"), &base.join("in/alias")));
-        assert_eq!(roots.check(&s(base.join("in/alias/x.deckcraft")), Access::Read), Ok(()));
+        assert_eq!(roots.check(&s(base.join("in/alias/x.visionslide")), Access::Read), Ok(()));
         // A root given through a link is the folder it leads to.
         assert!(made(&base.join("in"), &base.join("in-link")));
         let linked = AutomationRoots::new(&[base.join("in-link")], &[]).unwrap().unwrap();
-        assert_eq!(linked.check(&s(base.join("in/a.deckcraft")), Access::Read), Ok(()));
+        assert_eq!(linked.check(&s(base.join("in/a.visionslide")), Access::Read), Ok(()));
         let _ = std::fs::remove_dir_all(base);
     }
 
@@ -407,14 +407,14 @@ mod tests {
     #[test]
     fn names_are_compared_exactly() {
         let root = Path::new("/work/In");
-        assert!(inside(Path::new("/work/In/new/a.deckcraft"), root));
-        assert!(!inside(Path::new("/work/IN/a.deckcraft"), root));
-        assert!(!inside(Path::new("/WORK/In/a.deckcraft"), root));
-        assert!(!inside(Path::new("/work/in\u{212A}/a.deckcraft"), Path::new("/work/ink")), "the Kelvin sign folds to k");
+        assert!(inside(Path::new("/work/In/new/a.visionslide"), root));
+        assert!(!inside(Path::new("/work/IN/a.visionslide"), root));
+        assert!(!inside(Path::new("/WORK/In/a.visionslide"), root));
+        assert!(!inside(Path::new("/work/in\u{212A}/a.visionslide"), Path::new("/work/ink")), "the Kelvin sign folds to k");
         if cfg!(windows) {
             let root = Path::new(r"C:\work\In");
-            assert!(inside(Path::new(r"c:\work\In\a.deckcraft"), root), "a drive letter is one drive in either case");
-            assert!(!inside(Path::new(r"C:\work\IN\a.deckcraft"), root));
+            assert!(inside(Path::new(r"c:\work\In\a.visionslide"), root), "a drive letter is one drive in either case");
+            assert!(!inside(Path::new(r"C:\work\IN\a.visionslide"), root));
         }
     }
 
@@ -434,12 +434,12 @@ mod tests {
         std::fs::create_dir(base.join("in")).unwrap();
         let root = [base.join("in")];
         let roots = AutomationRoots::new(&root, &root).unwrap().unwrap();
-        assert_eq!(roots.check(&s(base.join("in/new.deckcraft")), Access::Write), Ok(()));
-        let e = roots.check(&s(base.join("IN/new.deckcraft")), Access::Write).unwrap_err();
+        assert_eq!(roots.check(&s(base.join("in/new.visionslide")), Access::Write), Ok(()));
+        let e = roots.check(&s(base.join("IN/new.visionslide")), Access::Write).unwrap_err();
         assert!(e.contains("outside the write root"), "{e}");
         std::fs::create_dir(base.join("IN")).unwrap();
-        std::fs::write(base.join("IN/secret.deckcraft"), "x").unwrap();
-        let e = roots.check(&s(base.join("IN/secret.deckcraft")), Access::Read).unwrap_err();
+        std::fs::write(base.join("IN/secret.visionslide"), "x").unwrap();
+        let e = roots.check(&s(base.join("IN/secret.visionslide")), Access::Read).unwrap_err();
         assert!(e.contains("outside the read root"), "{e}");
         let _ = std::fs::remove_dir_all(base);
     }
@@ -449,10 +449,10 @@ mod tests {
     #[test]
     fn windows_finds_the_real_case_and_refuses_devices() {
         let (base, roots) = folders("case");
-        let upper = s(base.join("IN/a.deckcraft"));
+        let upper = s(base.join("IN/a.visionslide"));
         assert_eq!(roots.check(&upper, Access::Read), Ok(()), "{upper}");
-        assert_eq!(roots.check(&s(base.join("In/Sub/New.deckcraft")), Access::Read), Ok(()));
-        assert_eq!(roots.check(&s(base.join("OUT/New.deckcraft")), Access::Write), Ok(()));
+        assert_eq!(roots.check(&s(base.join("In/Sub/New.visionslide")), Access::Read), Ok(()));
+        assert_eq!(roots.check(&s(base.join("OUT/New.visionslide")), Access::Write), Ok(()));
         assert_eq!(roots.check(&s(base.join("OUT")), Access::Write), Ok(()));
         let e = roots.check(&s(base.join("out/NUL")), Access::Write).unwrap_err();
         assert!(e.contains("reserved device names"), "{e}");
@@ -467,7 +467,7 @@ mod tests {
     #[test]
     fn scopes_nest_and_stay_on_their_thread() {
         let (base, roots) = folders("scopes");
-        let outside = s(base.join("outside/secret.deckcraft"));
+        let outside = s(base.join("outside/secret.visionslide"));
         assert_eq!(check_read(&outside), Ok(()), "nothing is confined by default");
         confine(Some(&roots), || {
             assert!(check_read(&outside).is_err());
@@ -488,10 +488,10 @@ mod tests {
     /// What is a device name, with superscript digits and a name before a colon, and what isn't.
     #[test]
     fn device_names() {
-        for d in ["CON", "nul", "Com1", "LPT9.txt", "aux.deckcraft", "NUL ", "COM¹", "Lpt²", "lpt³.txt", "COM1:", "nul:x", "COM¹:"] {
+        for d in ["CON", "nul", "Com1", "LPT9.txt", "aux.visionslide", "NUL ", "COM¹", "Lpt²", "lpt³.txt", "COM1:", "nul:x", "COM¹:"] {
             assert!(is_device_name(d), "{d}");
         }
-        for f in ["console", "com10", "COM0", "lpt", "a.deckcraft", "nul-x", "COM⁴", "com¹0", "lpt¹x", "console:x"] {
+        for f in ["console", "com10", "COM0", "lpt", "a.visionslide", "nul-x", "COM⁴", "com¹0", "lpt¹x", "console:x"] {
             assert!(!is_device_name(f), "{f}");
         }
     }

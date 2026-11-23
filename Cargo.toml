@@ -1,14 +1,13 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
-default-members = ["crates/*", "apps/deckcraft", "apps/deckcraft-cli"]
+default-members = ["crates/*", "apps/visionslide", "apps/visionslide-cli"]
 
 [workspace.package]
 version = "0.19.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.95"
-repository = "https://github.com/storytold/deckcraft"
 
 [workspace.dependencies]
 # OPC part-name primitives and package reader/writer.
@@ -24,21 +23,21 @@ craft-pptx = { git = "https://github.com/storytold/craft-libs", rev = "8048f8ef9
 # Shared MCP stdio framing and protocol constants (craft-libs#778).
 craft-mcp-server = { git = "https://github.com/storytold/craft-libs", rev = "bc186ca719958fcce3b6ee24794277eabed14609", version = "0.1.0" }
 # internal
-deckcraft-geom = { path = "crates/geom" }
-deckcraft-color = { path = "crates/color" }
-deckcraft-model = { path = "crates/model" }
-deckcraft-fonts = { path = "crates/fonts" }
-deckcraft-text = { path = "crates/text" }
-deckcraft-render = { path = "crates/render" }
-deckcraft-pdf = { path = "crates/pdf" }
-deckcraft-pptx = { path = "crates/pptx" }
-deckcraft-ppt = { path = "crates/ppt" }
-deckcraft-format = { path = "crates/format" }
-deckcraft-anim = { path = "crates/anim" }
-deckcraft-engine = { path = "crates/engine" }
-deckcraft-mcp = { path = "crates/mcp" }
-deckcraft-ui-egui = { path = "crates/ui-egui" }
-deckcraft-media = { path = "crates/media" }
+visionslide-geom = { path = "crates/geom" }
+visionslide-color = { path = "crates/color" }
+visionslide-model = { path = "crates/model" }
+visionslide-fonts = { path = "crates/fonts" }
+visionslide-text = { path = "crates/text" }
+visionslide-render = { path = "crates/render" }
+visionslide-pdf = { path = "crates/pdf" }
+visionslide-pptx = { path = "crates/pptx" }
+visionslide-ppt = { path = "crates/ppt" }
+visionslide-format = { path = "crates/format" }
+visionslide-anim = { path = "crates/anim" }
+visionslide-engine = { path = "crates/engine" }
+visionslide-mcp = { path = "crates/mcp" }
+visionslide-ui-egui = { path = "crates/ui-egui" }
+visionslide-media = { path = "crates/media" }
 
 # foundation
 kurbo = { version = "0.13", features = ["serde"] }
@@ -64,7 +63,7 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg",
 # Base64 for command payloads (engine); base64_compat keeps the legacy lenient decoder. Same rev as craft-deckcraft-format.
 craft-mime = { git = "https://github.com/storytold/craft-libs", rev = "254e9a409b410dc93c0e06ff66cd1e767893ac32", version = "=0.1.0" }
 # craft-media, craft-audio and craft-video share types and stay on one rev.
-# The .deckcraft package layer (identity, manifest, member names, bounded reads); crates/format maps the presentation onto it.
+# The .visionslide package layer (identity, manifest, member names, bounded reads); crates/format maps the presentation onto it.
 craft-deckcraft-format = { git = "https://github.com/storytold/craft-libs", rev = "254e9a409b410dc93c0e06ff66cd1e767893ac32", version = "=0.1.0" }
 craft-rtf = { git = "https://github.com/storytold/craft-libs", rev = "d0193d7e94b5ec180ecc2a152ea72047d39ac632", version = "=0.1.0" }
 craft-media = { git = "https://github.com/storytold/craft-libs", rev = "010702ee9b030844c852939095b1da0d0656a890", version = "=0.1.0", default-features = false }

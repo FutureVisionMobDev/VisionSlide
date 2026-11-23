@@ -5,7 +5,7 @@
 //! Both work on the table's *anchors* (each visible cell with its row and column span), edit
 //! that list, then lay the grid back out, so merges anywhere in the table survive.
 
-use deckcraft_model::table::{Cell, Table};
+use visionslide_model::table::{Cell, Table};
 
 /// A line closer than this to an existing grid line reuses it rather than adding a sliver.
 const SNAP: f64 = 4.0;
@@ -70,7 +70,7 @@ fn transpose(t: &mut Table) {
     }
     let widths = std::mem::take(&mut t.cols);
     t.cols = heights;
-    t.rows = widths.into_iter().map(|h| deckcraft_model::table::Row { height: h, cells: vec![] }).collect();
+    t.rows = widths.into_iter().map(|h| visionslide_model::table::Row { height: h, cells: vec![] }).collect();
     debug_assert_eq!((t.rows.len(), t.cols.len()), (nc, nr));
     rebuild(t, a);
 }
@@ -115,7 +115,7 @@ fn split_rows(t: &mut Table, y: f64, x0: f64, x1: f64) -> bool {
     let b = match ys.iter().position(|e| (e - y).abs() <= SNAP) {
         Some(b) => b,
         None => {
-            if t.rows.len() >= MAX_GRID || t.cols.len().saturating_mul(t.rows.len().saturating_add(1)) > deckcraft_model::table::MAX_CELLS {
+            if t.rows.len() >= MAX_GRID || t.cols.len().saturating_mul(t.rows.len().saturating_add(1)) > visionslide_model::table::MAX_CELLS {
                 return false;
             }
             let Some(k) = ys.windows(2).position(|w| w[0] < y && y < w[1]) else { return false };
@@ -124,7 +124,7 @@ fn split_rows(t: &mut Table, y: f64, x0: f64, x1: f64) -> bool {
             if let Some(r) = t.rows.get_mut(k) {
                 r.height = h0;
             }
-            t.rows.insert(k + 1, deckcraft_model::table::Row { height: h1, cells: vec![] });
+            t.rows.insert(k + 1, visionslide_model::table::Row { height: h1, cells: vec![] });
             for x in &mut a {
                 if x.r > k {
                     x.r += 1;
@@ -143,7 +143,7 @@ fn split_rows(t: &mut Table, y: f64, x0: f64, x1: f64) -> bool {
         let overlap = (r.min(x1) - l.max(x0)).max(0.0);
         if x.r < b && b < x.r + x.rs && overlap * 2.0 > r - l {
             let below =
-                Anchor { r: b, c: x.c, rs: x.r + x.rs - b, cs: x.cs, cell: Cell { text: deckcraft_model::TextBody::default(), ..x.cell.clone() } };
+                Anchor { r: b, c: x.c, rs: x.r + x.rs - b, cs: x.cs, cell: Cell { text: visionslide_model::TextBody::default(), ..x.cell.clone() } };
             out.push(Anchor { rs: b - x.r, ..x });
             out.push(below);
             changed = true;
@@ -277,10 +277,10 @@ mod tests {
     #[test]
     fn pencil_refuses_a_row_past_the_cell_cap() {
         let cols = 1000;
-        let rows = deckcraft_model::table::MAX_CELLS / cols;
+        let rows = visionslide_model::table::MAX_CELLS / cols;
         let mut t = Table {
             cols: vec![10.0; cols],
-            rows: vec![deckcraft_model::table::Row { height: 50.0, cells: vec![Cell::new(""); cols] }; rows],
+            rows: vec![visionslide_model::table::Row { height: 50.0, cells: vec![Cell::new(""); cols] }; rows],
             ..Default::default()
         };
         assert!(!draw_line(&mut t, (0.0, 25.0), (10_000.0, 25.0)));

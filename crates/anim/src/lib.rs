@@ -1,4 +1,4 @@
-//! Slide show timing for DeckCraft.
+//! Slide show timing for VisionSlide.
 //!
 //! - [`Timeline`]: a slide's animation list grouped into click steps, with per-shape (and
 //!   per-paragraph) [`AnimState`] at any point of the show.
@@ -32,8 +32,8 @@ mod tests_interact;
 #[cfg(test)]
 mod transition_tests;
 
-pub use deckcraft_model::Rgba;
 use serde::{Deserialize, Serialize};
+pub use visionslide_model::Rgba;
 
 pub use easing::ease;
 pub use interact::{Click, HitShape, Target};

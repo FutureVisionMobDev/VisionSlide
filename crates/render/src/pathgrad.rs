@@ -11,9 +11,9 @@
 
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
 use kurbo::{Affine, BezPath, PathEl, Point, Rect};
 use vello_cpu::{Pixmap, RenderContext, peniko};
+use visionslide_color::Rgba;
 
 /// Longest side of the rasterised gradient, in pixels (bilinear sampling smooths the rest).
 const MAX_SIDE: f64 = 384.0;

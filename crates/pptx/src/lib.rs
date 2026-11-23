@@ -2,7 +2,7 @@
 //! `craft-pptx` crate.
 //!
 //! [`import`] reads a package leniently (unknown parts are skipped, malformed parts are logged and
-//! ignored, every size and depth is bounded) into the DeckCraft model; [`export`] writes a valid
+//! ignored, every size and depth is bounded) into the VisionSlide model; [`export`] writes a valid
 //! package that PowerPoint opens without repair.
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 #![forbid(unsafe_code)]
@@ -16,7 +16,7 @@ pub use craft_pptx::MAX_TAG_BYTES;
 /// 3-D settings) instead of scanning strings.
 pub use xml::{Doc as XmlDoc, El as XmlEl, parse as parse_xml};
 
-use deckcraft_model::{Presentation, Shape, ShapeKind, defaults};
+use visionslide_model::{Presentation, Shape, ShapeKind, defaults};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PptxError {
@@ -44,13 +44,13 @@ impl From<craft_pptx::Error> for PptxError {
 struct DeckDefaults;
 
 impl craft_pptx::Defaults for DeckDefaults {
-    fn master(&self, size: deckcraft_geom::Size, after: u32) -> (craft_pptx::Master, u32) {
+    fn master(&self, size: visionslide_geom::Size, after: u32) -> (craft_pptx::Master, u32) {
         let (m, last) = defaults::build_master(size, Default::default(), after);
         (convert::master_to_craft(&m), last)
     }
 
     fn theme(&self) -> craft_drawingml::theme::Theme {
-        convert::theme_to_craft(&deckcraft_model::theme::Theme::default())
+        convert::theme_to_craft(&visionslide_model::theme::Theme::default())
     }
 
     fn master_styles(&self) -> (craft_drawingml::text::ListStyle, craft_drawingml::text::ListStyle, craft_drawingml::text::ListStyle) {
@@ -64,7 +64,7 @@ impl craft_pptx::Defaults for DeckDefaults {
     }
 
     fn application(&self) -> &str {
-        "DeckCraft"
+        "VisionSlide"
     }
 }
 
@@ -283,7 +283,7 @@ fn apply_media_timing(timing: &craft_xml::El, shapes: &mut [Shape]) {
         else {
             continue;
         };
-        let Some(ShapeKind::Media(clip)) = deckcraft_model::find_shape_mut(shapes, deckcraft_model::ShapeId(spid)).map(|s| &mut s.kind) else {
+        let Some(ShapeKind::Media(clip)) = visionslide_model::find_shape_mut(shapes, visionslide_model::ShapeId(spid)).map(|s| &mut s.kind) else {
             continue;
         };
         if cm.child(craft_xml::Local("cTn")).and_then(|c| c.attr_local("fill")) == Some("remove") {
@@ -316,7 +316,7 @@ fn apply_media_timing(timing: &craft_xml::El, shapes: &mut [Shape]) {
                 && f.offset == 0
                 && delay == 0
                 && let Some(spid) = c.find(craft_xml::Local("spTgt")).and_then(|t| t.attr_local("spid")).and_then(craft_xml::value::to_u32_lossy)
-                && let Some(ShapeKind::Media(clip)) = deckcraft_model::find_shape_mut(shapes, deckcraft_model::ShapeId(spid)).map(|s| &mut s.kind)
+                && let Some(ShapeKind::Media(clip)) = visionslide_model::find_shape_mut(shapes, visionslide_model::ShapeId(spid)).map(|s| &mut s.kind)
             {
                 clip.autoplay = true;
             }
@@ -379,17 +379,17 @@ fn post_import_timing(bytes: &[u8], pres: &mut Presentation) {
     }
 }
 
-fn span_ms(a: &deckcraft_model::anim::Animation) -> u32 {
+fn span_ms(a: &visionslide_model::anim::Animation) -> u32 {
     let iterations = if a.repeat == u32::MAX || a.repeat <= 1 { 1 } else { a.repeat.min(1_000) };
     a.duration_ms.saturating_mul(if a.auto_reverse { 2 } else { 1 }).saturating_mul(iterations)
 }
 
-fn flat_starts(anims: &[&deckcraft_model::anim::Animation]) -> Vec<u32> {
+fn flat_starts(anims: &[&visionslide_model::anim::Animation]) -> Vec<u32> {
     let (mut begin, mut end) = (0u32, 0u32);
     anims
         .iter()
         .map(|a| {
-            if a.start == deckcraft_model::anim::AnimStart::AfterPrevious {
+            if a.start == visionslide_model::anim::AnimStart::AfterPrevious {
                 begin = end;
             }
             let start = begin.saturating_add(a.delay_ms);
@@ -399,8 +399,8 @@ fn flat_starts(anims: &[&deckcraft_model::anim::Animation]) -> Vec<u32> {
         .collect()
 }
 
-fn plays_as_build(effects: &[&deckcraft_model::anim::Animation], offsets: &[u32], text: &deckcraft_model::text::TextBody) -> bool {
-    use deckcraft_model::anim::{AnimStart, Animation, BuildRole, build_filled, paragraph_build_roles};
+fn plays_as_build(effects: &[&visionslide_model::anim::Animation], offsets: &[u32], text: &visionslide_model::text::TextBody) -> bool {
+    use visionslide_model::anim::{AnimStart, Animation, BuildRole, build_filled, paragraph_build_roles};
     let Some(first) = effects.first() else { return false };
     let off0 = offsets.first().copied().unwrap_or(0);
     let flat = flat_starts(effects);
@@ -437,8 +437,8 @@ fn plays_as_build(effects: &[&deckcraft_model::anim::Animation], offsets: &[u32]
     matched == effects.len()
 }
 
-fn fold_slide_paragraph_builds(slide: &mut deckcraft_model::Slide, info: &SlideTimingInfo) {
-    use deckcraft_model::anim::{Animation, TextBuild};
+fn fold_slide_paragraph_builds(slide: &mut visionslide_model::Slide, info: &SlideTimingInfo) {
+    use visionslide_model::anim::{Animation, TextBuild};
     let same = |x: &Animation, y: &Animation| {
         x.paragraph.is_some()
             && y.paragraph.is_some()
@@ -452,7 +452,7 @@ fn fold_slide_paragraph_builds(slide: &mut deckcraft_model::Slide, info: &SlideT
     for run in slide.animations.chunk_by(same) {
         let effects: Vec<&Animation> = run.iter().collect();
         let offsets: Vec<u32> = run.iter().map(|a| a.paragraph.and_then(|p| info.offsets.get(&(a.shape.0, p)).copied()).unwrap_or(0)).collect();
-        let text = effects.first().and_then(|a| deckcraft_model::find_shape(&slide.shapes, a.shape)).and_then(|s| s.text.as_ref());
+        let text = effects.first().and_then(|a| visionslide_model::find_shape(&slide.shapes, a.shape)).and_then(|s| s.text.as_ref());
         if run.len() > 1
             && let (Some(first), Some(text)) = (effects.first(), text)
             && !info.opt_out.contains(&first.shape.0)
@@ -504,7 +504,7 @@ pub fn import_with_chart_budget(bytes: &[u8], points: usize) -> Result<Presentat
 }
 
 /// Read the theme of a `.thmx` file, or of a `.pptx` / `.potx`'s first master, with its media.
-pub fn import_theme(bytes: &[u8]) -> Result<(deckcraft_model::theme::Theme, Vec<deckcraft_model::MediaItem>), PptxError> {
+pub fn import_theme(bytes: &[u8]) -> Result<(visionslide_model::theme::Theme, Vec<visionslide_model::MediaItem>), PptxError> {
     let (theme, media) = craft_pptx::import_theme(bytes)?;
     Ok((convert::theme_from_craft(theme), media.into_iter().map(convert::media_item_from_craft).collect()))
 }
@@ -525,13 +525,13 @@ fn check_table_caps(p: &Presentation) -> Result<(), PptxError> {
     if over {
         return Err(PptxError::Unsupported(format!(
             "a table has more than {} cells; export refused rather than drop rows",
-            deckcraft_model::table::MAX_CELLS
+            visionslide_model::table::MAX_CELLS
         )));
     }
     Ok(())
 }
 
-fn media_needs_timing(clip: &deckcraft_model::MediaClip) -> bool {
+fn media_needs_timing(clip: &visionslide_model::MediaClip) -> bool {
     clip.autoplay
         || (clip.volume - 1.0).abs() > 1e-6
         || clip.hide_while_not_playing
@@ -544,13 +544,13 @@ fn media_needs_timing(clip: &deckcraft_model::MediaClip) -> bool {
 fn assign_spids<'a>(shapes: &'a [Shape], mut visit: impl FnMut(u32, &'a Shape)) {
     let mut used = std::collections::HashSet::new();
     let mut max = 1u32;
-    deckcraft_model::walk(shapes, &mut |s, _| {
+    visionslide_model::walk(shapes, &mut |s, _| {
         if s.id.0 >= 2 && s.id.0 < i32::MAX as u32 {
             max = max.max(s.id.0);
         }
     });
     let mut next = max;
-    deckcraft_model::walk(shapes, &mut |s, _| {
+    visionslide_model::walk(shapes, &mut |s, _| {
         let spid = if s.id.0 >= 2 && s.id.0 < i32::MAX as u32 && !used.contains(&s.id.0) {
             s.id.0
         } else {
@@ -562,7 +562,7 @@ fn assign_spids<'a>(shapes: &'a [Shape], mut visit: impl FnMut(u32, &'a Shape)) 
     });
 }
 
-fn collect_export_media(shapes: &[Shape]) -> Vec<(u32, &deckcraft_model::MediaClip)> {
+fn collect_export_media(shapes: &[Shape]) -> Vec<(u32, &visionslide_model::MediaClip)> {
     let mut media = Vec::new();
     assign_spids(shapes, |spid, s| {
         if let ShapeKind::Media(clip) = &s.kind
@@ -577,7 +577,7 @@ fn collect_export_media(shapes: &[Shape]) -> Vec<(u32, &deckcraft_model::MediaCl
 fn collect_grp_fill_pic_spids(shapes: &[Shape]) -> std::collections::HashSet<u32> {
     let mut spids = std::collections::HashSet::new();
     assign_spids(shapes, |spid, s| {
-        if s.fill == Some(deckcraft_model::style::Fill::Group)
+        if s.fill == Some(visionslide_model::style::Fill::Group)
             && matches!(s.kind, ShapeKind::Picture { .. } | ShapeKind::Opaque { preview: Some(_), .. })
         {
             spids.insert(spid);
@@ -586,7 +586,7 @@ fn collect_grp_fill_pic_spids(shapes: &[Shape]) -> std::collections::HashSet<u32
     spids
 }
 
-fn write_media_node(w: &mut craft_xml::Writer, id: &mut u32, spid: u32, clip: &deckcraft_model::MediaClip) {
+fn write_media_node(w: &mut craft_xml::Writer, id: &mut u32, spid: u32, clip: &visionslide_model::MediaClip) {
     let tag = if clip.video { "p:video" } else { "p:audio" };
     let mut t = w.tag(tag);
     if clip.video && clip.full_screen {
@@ -636,7 +636,7 @@ fn max_ctn_id(e: &craft_xml::El, max_id: &mut u32, depth: usize) {
     }
 }
 
-fn patch_slide_media_timing(xml_bytes: &[u8], media: &[(u32, &deckcraft_model::MediaClip)]) -> Vec<u8> {
+fn patch_slide_media_timing(xml_bytes: &[u8], media: &[(u32, &visionslide_model::MediaClip)]) -> Vec<u8> {
     let Ok(mut xml) = String::from_utf8(xml_bytes.to_vec()) else {
         return xml_bytes.to_vec();
     };
@@ -737,7 +737,7 @@ fn patch_pic_grp_fill(xml_bytes: &[u8], spids: &std::collections::HashSet<u32>) 
 fn collect_large_geom_adjs(shapes: &[Shape]) -> Vec<(u32, &[f64])> {
     let mut out = Vec::new();
     assign_spids(shapes, |spid, s| {
-        if let deckcraft_model::Geom::Preset { adj, .. } = &s.geom
+        if let visionslide_model::Geom::Preset { adj, .. } = &s.geom
             && adj.iter().any(|v| v.is_finite() && (v.round() < -2.0e9 || v.round() > 2.0e9))
         {
             out.push((spid, adj.as_slice()));
@@ -795,7 +795,7 @@ fn patch_large_geom_adjs(xml_bytes: &[u8], adjs: &[(u32, &[f64])]) -> Vec<u8> {
 }
 
 fn patch_exported_slides(p: &Presentation, bytes: Vec<u8>) -> Result<Vec<u8>, PptxError> {
-    let slide_media: Vec<Vec<(u32, &deckcraft_model::MediaClip)>> = p.slides.iter().map(|s| collect_export_media(&s.shapes)).collect();
+    let slide_media: Vec<Vec<(u32, &visionslide_model::MediaClip)>> = p.slides.iter().map(|s| collect_export_media(&s.shapes)).collect();
     let slide_grp_pics: Vec<std::collections::HashSet<u32>> = p.slides.iter().map(|s| collect_grp_fill_pic_spids(&s.shapes)).collect();
     let slide_adjs: Vec<Vec<(u32, &[f64])>> = p.slides.iter().map(|s| collect_large_geom_adjs(&s.shapes)).collect();
     if slide_media.iter().all(Vec::is_empty) && slide_grp_pics.iter().all(std::collections::HashSet::is_empty) && slide_adjs.iter().all(Vec::is_empty)
@@ -868,7 +868,7 @@ pub fn export_as(p: &Presentation, ext: &str) -> Result<Vec<u8>, PptxError> {
 mod import_theme_tests {
     use std::io::{Read, Write};
 
-    use deckcraft_model::Presentation;
+    use visionslide_model::Presentation;
 
     fn custom() -> Presentation {
         let mut p = Presentation::default();
@@ -876,7 +876,7 @@ mod import_theme_tests {
         m.theme.name = "Harbour".into();
         m.theme.fonts.major.latin = "Lato".into();
         m.theme.fonts.minor.latin = "Source Sans 3".into();
-        m.theme.colors.set(deckcraft_color::SchemeSlot::Accent1, deckcraft_color::Rgba::rgb(0x12, 0x34, 0x56));
+        m.theme.colors.set(visionslide_color::SchemeSlot::Accent1, visionslide_color::Rgba::rgb(0x12, 0x34, 0x56));
         p
     }
 
@@ -904,7 +904,7 @@ mod import_theme_tests {
             assert_eq!(t.name, "Harbour");
             assert_eq!(t.fonts.major.latin, "Lato");
             assert_eq!(t.fonts.minor.latin, "Source Sans 3");
-            assert_eq!(t.colors.get(deckcraft_color::SchemeSlot::Accent1), deckcraft_color::Rgba::rgb(0x12, 0x34, 0x56));
+            assert_eq!(t.colors.get(visionslide_color::SchemeSlot::Accent1), visionslide_color::Rgba::rgb(0x12, 0x34, 0x56));
         }
     }
 
@@ -920,9 +920,9 @@ mod import_theme_tests {
 
 #[cfg(test)]
 mod table_direction_tests {
-    use deckcraft_model::table::{Cell, Table};
-    use deckcraft_model::{Presentation, Shape, ShapeId, ShapeKind, defaults};
     use std::sync::Arc;
+    use visionslide_model::table::{Cell, Table};
+    use visionslide_model::{Presentation, Shape, ShapeId, ShapeKind, defaults};
 
     fn table(p: &Presentation) -> &Table {
         p.slides[0]
@@ -961,7 +961,7 @@ mod table_direction_tests {
     fn over_cap_table_export_is_refused() {
         let mut p = defaults::new_presentation(None);
         let mut t = Table::new(1, 2, 200.0, 30.0);
-        t.rows.resize_with(deckcraft_model::table::MAX_CELLS / 2 + 1, || deckcraft_model::table::Row {
+        t.rows.resize_with(visionslide_model::table::MAX_CELLS / 2 + 1, || visionslide_model::table::Row {
             height: 20.0,
             cells: vec![Cell::new("x"), Cell::new("y")],
         });
@@ -974,18 +974,18 @@ mod table_direction_tests {
     #[test]
     fn over_cap_table_on_notes_and_handout_master_is_refused() {
         let mut t = Table::new(1, 2, 200.0, 30.0);
-        t.rows.resize_with(deckcraft_model::table::MAX_CELLS / 2 + 1, || deckcraft_model::table::Row {
+        t.rows.resize_with(visionslide_model::table::MAX_CELLS / 2 + 1, || visionslide_model::table::Row {
             height: 20.0,
             cells: vec![Cell::new("x"), Cell::new("y")],
         });
         let mut p_notes = defaults::new_presentation(None);
         let shape = Shape { id: ShapeId(p_notes.alloc_id().expect("id")), kind: ShapeKind::Table(t.clone()), ..Default::default() };
-        p_notes.notes_master = Some(Arc::new(deckcraft_model::Master { name: "Notes".into(), shapes: vec![shape], ..Default::default() }));
+        p_notes.notes_master = Some(Arc::new(visionslide_model::Master { name: "Notes".into(), shapes: vec![shape], ..Default::default() }));
         assert!(matches!(crate::export(&p_notes), Err(crate::PptxError::Unsupported(_))));
 
         let mut p_handout = defaults::new_presentation(None);
         let shape = Shape { id: ShapeId(p_handout.alloc_id().expect("id")), kind: ShapeKind::Table(t), ..Default::default() };
-        p_handout.handout_master = Some(Arc::new(deckcraft_model::Master { name: "Handout".into(), shapes: vec![shape], ..Default::default() }));
+        p_handout.handout_master = Some(Arc::new(visionslide_model::Master { name: "Handout".into(), shapes: vec![shape], ..Default::default() }));
         assert!(matches!(crate::export(&p_handout), Err(crate::PptxError::Unsupported(_))));
     }
 }

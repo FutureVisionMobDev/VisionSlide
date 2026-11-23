@@ -4,7 +4,7 @@ use std::io::{Cursor, Read, Write};
 
 #[test]
 fn chart_sidecars_are_optional_for_older_native_files() {
-    use deckcraft_model::chart::{Chart, ChartType};
+    use visionslide_model::chart::{Chart, ChartType};
     let chart = Chart::sample(ChartType::Pie);
     let mut json = serde_json::to_value(&chart).expect("chart JSON");
     assert!(json.get("kept").is_none(), "empty sidecars should not enlarge ordinary files");
@@ -15,7 +15,7 @@ fn chart_sidecars_are_optional_for_older_native_files() {
 
 #[test]
 fn alternate_run_language_survives_two_native_saves_and_absence() {
-    use deckcraft_model::text::{Paragraph, Run, RunProps, TextBody};
+    use visionslide_model::text::{Paragraph, Run, RunProps, TextBody};
     let mut p = defaults::new_presentation(None);
     Arc::make_mut(&mut p.slides[0]).shapes[0].text = Some(TextBody {
         paragraphs: vec![Paragraph {
@@ -40,8 +40,8 @@ fn alternate_run_language_survives_two_native_saves_and_absence() {
 
 #[test]
 fn native_save_keeps_chart_relationships_and_payloads() {
-    use deckcraft_model::chart::{Chart, ChartKept, ChartPart, ChartRel, ChartType};
-    use deckcraft_model::{Shape, ShapeId, ShapeKind};
+    use visionslide_model::chart::{Chart, ChartKept, ChartPart, ChartRel, ChartType};
+    use visionslide_model::{Shape, ShapeId, ShapeKind};
     let kept = ChartKept {
         rels: vec![ChartRel {
             id: "rWorkbook".into(),
@@ -77,9 +77,9 @@ fn native_save_keeps_chart_relationships_and_payloads() {
 
 #[test]
 fn native_table_direction_and_column_text_survive_two_saves() {
-    use deckcraft_model::table::{Cell, Table};
-    use deckcraft_model::{Shape, ShapeId, ShapeKind};
     use std::sync::Arc;
+    use visionslide_model::table::{Cell, Table};
+    use visionslide_model::{Shape, ShapeId, ShapeKind};
 
     for rtl in [Some(true), Some(false), None] {
         let mut p = defaults::new_presentation(None);
@@ -194,9 +194,9 @@ fn many_slides_on_missing_layouts_are_repaired() {
     p.slides = (0..2000u32)
         .map(|i| {
             let mut s = (*template).clone();
-            s.id = deckcraft_model::SlideId(10_000 + i);
+            s.id = visionslide_model::SlideId(10_000 + i);
             if i % 2 == 1 {
-                s.layout = deckcraft_model::LayoutId(900_000 + i);
+                s.layout = visionslide_model::LayoutId(900_000 + i);
             }
             Arc::new(s)
         })
@@ -267,7 +267,7 @@ fn garbage_is_an_error_not_a_panic() {
 /// A video's crop is brought into the same range as a picture's (#972).
 #[test]
 fn a_video_crop_is_repaired_like_a_picture_crop() {
-    use deckcraft_model::{MediaClip, Shape};
+    use visionslide_model::{MediaClip, Shape};
     let mut p = Presentation::default();
     let clip = MediaClip { video: true, crop: [f64::NAN, 0.25, -1e9, 0.0], ..Default::default() };
     Arc::make_mut(&mut p.slides[0]).shapes.push(Shape { kind: ShapeKind::Media(clip), ..Default::default() });
@@ -280,17 +280,17 @@ fn a_video_crop_is_repaired_like_a_picture_crop() {
 /// such number repaired (it failed as "invalid type: null, expected f64").
 #[test]
 fn a_file_saved_with_non_finite_numbers_reopens() {
-    use deckcraft_model::{Shape, ShapeKind, Xfrm};
+    use visionslide_model::{Shape, ShapeKind, Xfrm};
     let mut p = Presentation::default();
     let nan = f64::NAN;
     let inf = f64::INFINITY;
     let mut pic = Shape { xfrm: Some(Xfrm { x: nan, y: -inf, w: 1e300, h: -4.0, rot: 725.0, ..Default::default() }), ..Default::default() };
-    pic.kind = ShapeKind::Picture { fill: deckcraft_model::style::PictureFill { crop: [nan, inf, 0.25, -1e9], ..Default::default() } };
-    pic.line = Some(deckcraft_model::Line { width: Some(1e9), ..Default::default() });
+    pic.kind = ShapeKind::Picture { fill: visionslide_model::style::PictureFill { crop: [nan, inf, 0.25, -1e9], ..Default::default() } };
+    pic.line = Some(visionslide_model::Line { width: Some(1e9), ..Default::default() });
     let mut text = Shape { xfrm: Some(Xfrm { rot: inf, w: 100.0, h: 50.0, ..Default::default() }), ..Default::default() };
-    let mut body = deckcraft_model::text::TextBody::default();
-    let mut para = deckcraft_model::text::Paragraph::default();
-    para.runs.push(deckcraft_model::text::Run::with("x", deckcraft_model::text::RunProps { size: Some(-3.0), ..Default::default() }));
+    let mut body = visionslide_model::text::TextBody::default();
+    let mut para = visionslide_model::text::Paragraph::default();
+    para.runs.push(visionslide_model::text::Run::with("x", visionslide_model::text::RunProps { size: Some(-3.0), ..Default::default() }));
     para.end_props.size = Some(1e9);
     body.paragraphs.push(para);
     text.text = Some(body);
@@ -320,8 +320,8 @@ fn a_file_saved_with_non_finite_numbers_reopens() {
 
 #[test]
 fn reflection_transform_survives_two_native_saves_and_absent_fields_stay_absent() {
-    use deckcraft_model::style::Reflection;
-    use deckcraft_model::{Effects, Shape};
+    use visionslide_model::style::Reflection;
+    use visionslide_model::{Effects, Shape};
     let mut p = Presentation::default();
     let reflection = Reflection {
         blur: 1.0,
@@ -370,7 +370,7 @@ fn reflection_transform_survives_two_native_saves_and_absent_fields_stay_absent(
 /// including a `null` inside a tagged enum, where serde reports only the enclosing object.
 #[test]
 fn older_files_with_null_numbers_open() {
-    use deckcraft_model::{Shape, ShapeKind, Xfrm};
+    use visionslide_model::{Shape, ShapeKind, Xfrm};
     let nan = f64::NAN;
     for case in 0..3 {
         let mut p = Presentation::default();
@@ -381,12 +381,12 @@ fn older_files_with_null_numbers_open() {
                 ..Default::default()
             },
             _ => Shape {
-                kind: ShapeKind::Picture { fill: deckcraft_model::style::PictureFill { crop: [0.1, nan, 0.0, 0.0], ..Default::default() } },
+                kind: ShapeKind::Picture { fill: visionslide_model::style::PictureFill { crop: [0.1, nan, 0.0, 0.0], ..Default::default() } },
                 ..Default::default()
             },
         };
         Arc::make_mut(&mut p.slides[0]).shapes.push(sh);
-        let m = Manifest { format: "deckcraft".into(), version: VERSION, generator: "old".into(), presentation: p };
+        let m = Manifest { format: "visionslide".into(), version: VERSION, generator: "old".into(), presentation: p };
         let json = serde_json::to_vec(&m).unwrap();
         assert!(json.windows(4).any(|w| w == b"null"));
         let back = parse_manifest::<Presentation>(&json).unwrap_or_else(|e| panic!("case {case}: {e}"));
@@ -398,11 +398,11 @@ fn older_files_with_null_numbers_open() {
 /// native format: it is drawn at 100 % and only fitted when its text changes (#724).
 #[test]
 fn a_bare_normautofit_body_round_trips() {
-    use deckcraft_model::text::{AutoFit, TextBody};
+    use visionslide_model::text::{AutoFit, TextBody};
     let mut p = Presentation::default();
     let mut body = TextBody::from_text("Overflowing");
     body.body.autofit = Some(AutoFit::Shrink { font_scale: None, line_reduction: 0.0 });
-    let sh = deckcraft_model::Shape { text: Some(body), ..Default::default() };
+    let sh = visionslide_model::Shape { text: Some(body), ..Default::default() };
     Arc::make_mut(&mut p.slides[0]).shapes.push(sh);
     let back = load(&save(&p).unwrap()).unwrap_or_else(|e| panic!("{e}"));
     let body = back.slides[0].shapes.last().unwrap().text.clone().unwrap();
@@ -410,7 +410,7 @@ fn a_bare_normautofit_body_round_trips() {
     // A scale the file saved round-trips as itself.
     let mut body = TextBody::from_text("Overflowing");
     body.body.autofit = Some(AutoFit::Shrink { font_scale: Some(0.62), line_reduction: 0.2 });
-    let sh = deckcraft_model::Shape { text: Some(body), ..Default::default() };
+    let sh = visionslide_model::Shape { text: Some(body), ..Default::default() };
     Arc::make_mut(&mut p.slides[0]).shapes.push(sh);
     let back = load(&save(&p).unwrap()).unwrap_or_else(|e| panic!("{e}"));
     let body = back.slides[0].shapes.last().unwrap().text.clone().unwrap();
@@ -420,21 +420,21 @@ fn a_bare_normautofit_body_round_trips() {
 /// Only `null`s where numbers belong are patched: other damage still fails.
 #[test]
 fn other_damage_is_still_reported() {
-    let ok = serde_json::to_vec(&serde_json::json!({"format": "deckcraft", "version": 1, "generator": "t", "presentation": {}})).unwrap();
+    let ok = serde_json::to_vec(&serde_json::json!({"format": "visionslide", "version": 1, "generator": "t", "presentation": {}})).unwrap();
     assert!(parse_manifest::<Presentation>(&ok).is_ok());
     let bad = br#"{"format": null, "version": 1, "generator": "t", "presentation": {}}"#;
     assert!(parse_manifest::<Presentation>(bad).is_err());
     let truncated = &ok[..ok.len() - 3];
     assert!(parse_manifest::<Presentation>(truncated).is_err());
     // A null number on a later line (pretty-printed by another tool) is found too.
-    let pretty = b"{\n  \"format\": \"deckcraft\",\n  \"version\": 1,\n  \"generator\": \"t\",\n  \"presentation\": {\"slides\": [{\"shapes\": [{\"xfrm\": {\"x\": null, \"y\": 1, \"w\": 2, \"h\": 3}}]}]}\n}";
+    let pretty = b"{\n  \"format\": \"visionslide\",\n  \"version\": 1,\n  \"generator\": \"t\",\n  \"presentation\": {\"slides\": [{\"shapes\": [{\"xfrm\": {\"x\": null, \"y\": 1, \"w\": 2, \"h\": 3}}]}]}\n}";
     let m = parse_manifest::<Presentation>(pretty).unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(m.presentation.slides[0].shapes[0].xfrm.unwrap().x, 0.0);
 }
 
 #[test]
 fn degenerate_slide_sizes_are_repaired() {
-    use deckcraft_model::Size;
+    use visionslide_model::Size;
     let cases = [
         ((0.0, 0.0), (960.0, 540.0)),
         ((-5.0, 540.0), (960.0, 540.0)),
@@ -455,7 +455,7 @@ fn degenerate_slide_sizes_are_repaired() {
 
 #[test]
 fn repair_bounds_the_notes_page_size() {
-    let mut p = Presentation { notes_size: deckcraft_model::Size::new(1e12, 0.01), ..Default::default() };
+    let mut p = Presentation { notes_size: visionslide_model::Size::new(1e12, 0.01), ..Default::default() };
     repair(&mut p);
     assert_eq!((p.notes_size.width, p.notes_size.height), (4032.0, 72.0));
 }
@@ -495,7 +495,7 @@ fn files_with_unreadable_slide_sizes_still_open() {
 #[test]
 fn repair_fixes_missing_layout_and_size() {
     let mut p = Presentation::default();
-    Arc::make_mut(&mut p.slides[0]).layout = deckcraft_model::LayoutId(99999);
+    Arc::make_mut(&mut p.slides[0]).layout = visionslide_model::LayoutId(99999);
     p.slide_size.width = f64::NAN;
     repair(&mut p);
     assert!(p.validate().is_empty());
@@ -565,8 +565,8 @@ fn markdown_headings_and_list_items() {
 /// #814: slides_to_outline includes table cell text, which it used to skip.
 #[test]
 fn outline_includes_table_text() {
-    use deckcraft_model::table::{Cell, Row, Table};
-    use deckcraft_model::{Shape, ShapeKind, Xfrm};
+    use visionslide_model::table::{Cell, Row, Table};
+    use visionslide_model::{Shape, ShapeKind, Xfrm};
     let mut p = defaults::new_presentation(None);
     let layout = defaults::layout_of_kind(&p, LayoutType::TitleAndContent).unwrap();
     let mut s = defaults::new_slide(&mut p, layout).expect("slide");

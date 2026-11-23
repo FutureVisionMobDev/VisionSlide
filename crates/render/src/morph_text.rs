@@ -2,12 +2,12 @@
 //! in the old text to their place in the new one, growing or shrinking to the new size; the rest
 //! of the old text fades out and the rest of the new one fades in, both riding the moving box.
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::resolve::Ctx;
-use deckcraft_model::{Shape, ShapeId};
-use deckcraft_text::{Fields, GlyphRun, Opts, TextLayout};
 use kurbo::{Affine, Point, Vec2};
 use vello_cpu::RenderContext;
+use visionslide_geom::Xfrm;
+use visionslide_model::resolve::Ctx;
+use visionslide_model::{Shape, ShapeId};
+use visionslide_text::{Fields, GlyphRun, Opts, TextLayout};
 
 use crate::{color, draw_glyph, draw_layout, shape_geometry, text_transform};
 
@@ -87,7 +87,7 @@ fn matches(a: &[Token], b: &[Token]) -> Vec<Option<usize>> {
 fn layout(ctx: &Ctx, s: &Shape, x: Xfrm, fields: &dyn Fields) -> Option<TextLayout> {
     let body = s.text.as_ref().filter(|b| !b.is_empty())?;
     let rect = shape_geometry(s, x.w, x.h).text_rect;
-    Some(deckcraft_text::layout(ctx, s, body, &Opts { rect, fields, prompt_color: None, no_shrink: false }))
+    Some(visionslide_text::layout(ctx, s, body, &Opts { rect, fields, prompt_color: None, no_shrink: false }))
 }
 
 fn glyph_at(l: &TextLayout, (ri, gi): (usize, usize)) -> Option<(&GlyphRun, u32, Point)> {

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <?ifndef HasCraftFontLicences ?>
+  <?define HasCraftFontLicences=0 ?>
+  <?endif?>
+  <Package Name="VisionSlide" Manufacturer="VisionOffice" Version="$(var.Version)" UpgradeCode="77551ED5-0EF7-4B87-9B46-96A3F20A4898" Scope="perUserOrMachine" Compressed="yes" Language="1033">
+    <SummaryInformation Description="VisionSlide presentations and slide shows" Manufacturer="VisionOffice" />
+    <?include $(sys.SOURCEFILEDIR)install-policy.wxi?>
+    <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
+         (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of VisionSlide is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="VisionSlideIcon.ico" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="VisionSlideIcon.ico" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="CraftSuiteFolder" Name="VisionSlide">
+        <Directory Id="INSTALLFOLDER" Name="VisionSlide" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="VisionSlide" Level="1">
+      <?if $(var.HasCraftFontLicences) = 1 ?>
+      <ComponentGroupRef Id="CraftFontLicences" />
+      <?endif?>
+      <ComponentGroupRef Id="VisionSlideFiles" />
+    </Feature>
+  <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2" Condition="NOT Installed" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="NOT Installed" />
+    </UI>
+  </Package>
+
+  <Fragment>
+    <?if $(var.HasCraftFontLicences) = 1 ?>
+    <ComponentGroup Id="CraftFontLicences" Directory="INSTALLFOLDER">
+      <Files Include="$(var.DocsDir)\**" />
+    </ComponentGroup>
+    <?endif?>
+    <ComponentGroup Id="VisionSlideFiles" Directory="INSTALLFOLDER">
+      <Component Id="VisionSlideApp" Guid="D87EA444-41A4-4C19-922E-66D1A29461FF">
+        <File Id="VisionSlideNotice" Source="$(var.BinDir)\NOTICE" KeyPath="no" />
+        <File Id="VisionSlideExe" Source="$(var.BinDir)\visionslide.exe" KeyPath="yes">
+          <!-- No Icon here, so the shortcut shows the icon embedded in visionslide.exe (build.rs). An
+               MSI Icon is cached under %APPDATA%\Microsoft\Installer\{ProductCode}\, and every
+               update is a major upgrade with a new ProductCode that deletes the old folder. A
+               taskbar pin is a copy of this shortcut that the update never touches, so it kept
+               pointing at the deleted file and lost its icon (#1114). The exe's path survives
+               updates; the shortcut is not advertised, so it targets that path and its icon is the
+               exe's own. The Icon above stays for ARPPRODUCTICON (Apps and features). -->
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="VisionSlide" Description="VisionSlide presentations and slide shows" WorkingDirectory="INSTALLFOLDER" Advertise="no" />
+        </File>
+
+        <!-- .visionslide: VisionSlide's own format. -->
+        <ProgId Id="VisionSlide.Presentation" Description="VisionSlide Presentation" Icon="VisionSlideExe" IconIndex="0">
+          <Extension Id="visionslide" ContentType="application/x-visionslide">
+            <Verb Id="open" Command="Open" TargetFile="VisionSlideExe" Argument="&quot;%1&quot;" />
+          </Extension>
+        </ProgId>
+
+        <!-- "Open with" for PowerPoint formats, without becoming the default. -->
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe" Name="FriendlyAppName" Value="VisionSlide" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\shell\open\command" Value="&quot;[#VisionSlideExe]&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\SupportedTypes" Name=".visionslide" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\SupportedTypes" Name=".pptx" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\SupportedTypes" Name=".potx" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\SupportedTypes" Name=".ppsx" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\SupportedTypes" Name=".ppt" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\SupportedTypes" Name=".pot" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\Applications\visionslide.exe\SupportedTypes" Name=".pps" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.pptx\OpenWithProgids" Name="VisionSlide.Presentation" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.potx\OpenWithProgids" Name="VisionSlide.Presentation" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.ppsx\OpenWithProgids" Name="VisionSlide.Presentation" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.ppt\OpenWithProgids" Name="VisionSlide.Presentation" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.pot\OpenWithProgids" Name="VisionSlide.Presentation" Value="" Type="string" />
+        <RegistryValue Root="HKMU" Key="Software\Classes\.pps\OpenWithProgids" Name="VisionSlide.Presentation" Value="" Type="string" />
+
+        <RegistryValue Root="HKMU" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\visionslide.exe" Value="[#VisionSlideExe]" Type="string" />
+      <RegistryValue Root="HKMU" Key="Software\VisionSlide" Name="InstallDir" Value="[INSTALLFOLDER]" Type="string" />
+      </Component>
+
+      <Component Id="VisionSlideCli">
+        <File Id="VisionSlideCliExe" Source="$(var.BinDir)\visionslide-cli.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

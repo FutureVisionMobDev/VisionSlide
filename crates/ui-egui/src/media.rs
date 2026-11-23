@@ -1,14 +1,14 @@
-//! Media playback in the UI host: the [`deckcraft_media::Player`] (audio out + clocks), video
+//! Media playback in the UI host: the [`visionslide_media::Player`] (audio out + clocks), video
 //! feeds and their textures, the editor's media control bar, and the engine's `media.*` requests.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use deckcraft_engine::{MediaStatus, Session};
-use deckcraft_geom::Xfrm;
-use deckcraft_media::{AudioOut, ClipParams, Frame, PlayState, Player, VideoFeed, VoiceSpec, VoiceStatus};
-use deckcraft_model::{MediaClip, Presentation, Shape, ShapeId, ShapeKind};
 use egui::{Align2, Color32, CornerRadius, Pos2, Rect, Sense, Stroke, TextureHandle, Ui, pos2, vec2};
+use visionslide_engine::{MediaStatus, Session};
+use visionslide_geom::Xfrm;
+use visionslide_media::{AudioOut, ClipParams, Frame, PlayState, Player, VideoFeed, VoiceSpec, VoiceStatus};
+use visionslide_model::{MediaClip, Presentation, Shape, ShapeId, ShapeKind};
 
 use crate::icons::{self, Icon};
 
@@ -60,7 +60,7 @@ pub struct MediaHost {
 /// An animated GIF picture on a slide: its box, play time, frame and seconds to the next frame.
 pub struct Gif {
     pub id: ShapeId,
-    pub rect: deckcraft_geom::Xfrm,
+    pub rect: visionslide_geom::Xfrm,
     pub t: f64,
     pub frame: usize,
     pub next: f64,
@@ -76,7 +76,7 @@ fn collect_pictures<'a>(shapes: &'a [Shape], group: Option<(Xfrm, Xfrm)>, depth:
     for sh in shapes {
         let Some(x) = sh.xfrm else { continue };
         let x = match group {
-            Some((gx, ch)) => deckcraft_engine::cmd::arrange::child_to_parent(&gx, &ch, &x),
+            Some((gx, ch)) => visionslide_engine::cmd::arrange::child_to_parent(&gx, &ch, &x),
             None => x,
         };
         match &sh.kind {
@@ -151,7 +151,7 @@ impl MediaHost {
                 self.durations.remove(&k);
             }
         }
-        let duration = deckcraft_media::probe(bytes).map(|i| i.duration()).unwrap_or(0.0);
+        let duration = visionslide_media::probe(bytes).map(|i| i.duration()).unwrap_or(0.0);
         self.durations.insert(media_key, Probed { source: Arc::clone(bytes), duration });
         duration
     }
@@ -176,7 +176,7 @@ impl MediaHost {
                 c.0 = now - held;
             }
             let t = c.1.unwrap_or(now - c.0);
-            if let Some((frame, next)) = deckcraft_render::gif_frame(&item.data, &fill.adjust, t) {
+            if let Some((frame, next)) = visionslide_render::gif_frame(&item.data, &fill.adjust, t) {
                 out.push(Gif { id: sh.id, rect, t, frame, next, paused: p });
             }
         }
@@ -411,7 +411,7 @@ pub fn clip_on(doc: &Presentation, index: usize, id: ShapeId) -> Option<MediaCli
     doc.slides.get(index).and_then(|s| walk_clip(&s.shapes, id))
 }
 
-fn walk_clip(shapes: &[deckcraft_model::Shape], id: ShapeId) -> Option<MediaClip> {
+fn walk_clip(shapes: &[visionslide_model::Shape], id: ShapeId) -> Option<MediaClip> {
     shapes.iter().find_map(|s| match &s.kind {
         ShapeKind::Media(m) if s.id == id => Some(m.clone()),
         ShapeKind::Group { children, .. } => walk_clip(children, id),
@@ -426,7 +426,7 @@ pub fn carries_over(clip: &MediaClip, doc: &Presentation, id: ShapeId, to: usize
 }
 
 /// Media shapes directly on slide `index`: (id, box in slide points, clip).
-pub fn slide_media(doc: &Presentation, index: usize) -> Vec<(ShapeId, deckcraft_geom::Xfrm, MediaClip)> {
+pub fn slide_media(doc: &Presentation, index: usize) -> Vec<(ShapeId, visionslide_geom::Xfrm, MediaClip)> {
     let Some(s) = doc.slides.get(index) else { return vec![] };
     s.shapes
         .iter()
@@ -609,9 +609,9 @@ mod tests {
     use std::collections::HashSet;
     use std::sync::Arc;
 
-    use deckcraft_geom::Xfrm;
-    use deckcraft_model::style::PictureFill;
-    use deckcraft_model::{MediaClip, Presentation, Shape, ShapeId, ShapeKind};
+    use visionslide_geom::Xfrm;
+    use visionslide_model::style::PictureFill;
+    use visionslide_model::{MediaClip, Presentation, Shape, ShapeId, ShapeKind};
 
     use super::*;
 
@@ -780,12 +780,12 @@ mod tests {
     /// insert + play path: its audio track sounds, and the insert said the video won't show.
     #[test]
     fn a_webm_with_an_undecodable_video_codec_still_plays_its_audio() {
-        use deckcraft_engine::Session;
+        use visionslide_engine::Session;
         let bytes = include_bytes!("../../media/tests/fixtures/clip-vp8.webm");
         let mut s = Session::with_new();
         let _ = s.execute("slide.new", &serde_json::json!({"layout": "blank"}));
         let r = s
-            .execute("insert.video", &serde_json::json!({"name": "clip.webm", "data": deckcraft_engine::cmd::base64_encode(bytes)}))
+            .execute("insert.video", &serde_json::json!({"name": "clip.webm", "data": visionslide_engine::cmd::base64_encode(bytes)}))
             .expect("insert");
         assert_eq!(r["playable"], true, "the Vorbis track plays: {r}");
         let w = r["warning"].as_str().expect("the insert says the video won't show");

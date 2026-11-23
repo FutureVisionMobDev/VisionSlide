@@ -1,0 +1,22 @@
+[package]
+name = "visionslide-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "VisionSlide on the command line: render, convert, run commands, inspect, and serve MCP"
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "visionslide-cli"
+path = "src/main.rs"
+
+[dependencies]
+visionslide-engine = { workspace = true }
+visionslide-mcp = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+zip = { workspace = true }

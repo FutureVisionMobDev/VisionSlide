@@ -4,8 +4,8 @@
 use std::io::{Cursor, Read, Write};
 use std::sync::Arc;
 
-use deckcraft_model::defaults;
-use deckcraft_model::text::{Bullet, ParaProps, TextBody};
+use visionslide_model::defaults;
+use visionslide_model::text::{Bullet, ParaProps, TextBody};
 
 const NOTES: &str = "ppt/notesSlides/notesSlide1.xml";
 
@@ -20,7 +20,7 @@ const EMPTY_NOTES_XML: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone
 fn empty_notes_deck() -> Vec<u8> {
     let mut p = defaults::new_presentation(None);
     Arc::make_mut(&mut p.slides[0]).notes = TextBody::from_text("placeholder");
-    let bytes = deckcraft_pptx::export(&p).expect("export");
+    let bytes = visionslide_pptx::export(&p).expect("export");
     let mut src = zip::ZipArchive::new(Cursor::new(bytes)).expect("zip");
     let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
     let mut found = false;
@@ -44,7 +44,7 @@ fn empty_notes_deck() -> Vec<u8> {
 fn deck() -> Vec<u8> {
     let mut p = defaults::new_presentation(None);
     Arc::make_mut(&mut p.slides[0]).notes = TextBody::from_text("placeholder");
-    let bytes = deckcraft_pptx::export(&p).expect("export");
+    let bytes = visionslide_pptx::export(&p).expect("export");
     let mut src = zip::ZipArchive::new(Cursor::new(bytes)).expect("zip");
     let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
     let mut found = false;
@@ -87,17 +87,17 @@ fn assert_formatted(notes: &TextBody) {
 
 #[test]
 fn notes_import_keeps_bold_levels_and_indents() {
-    let p = deckcraft_pptx::import(&deck()).expect("import");
+    let p = visionslide_pptx::import(&deck()).expect("import");
     assert_formatted(&p.slides[0].notes);
 }
 
 #[test]
 fn notes_formatting_survives_a_round_trip() {
-    let p = deckcraft_pptx::import(&deck()).expect("import");
-    let again = deckcraft_pptx::import(&deckcraft_pptx::export(&p).expect("export")).expect("reimport");
+    let p = visionslide_pptx::import(&deck()).expect("import");
+    let again = visionslide_pptx::import(&visionslide_pptx::export(&p).expect("export")).expect("reimport");
     assert_formatted(&again.slides[0].notes);
     // And the written XML says so, for PowerPoint.
-    let bytes = deckcraft_pptx::export(&again).expect("export");
+    let bytes = visionslide_pptx::export(&again).expect("export");
     let mut z = zip::ZipArchive::new(Cursor::new(bytes)).expect("zip");
     let mut xml = String::new();
     z.by_name(NOTES).expect("notes part").read_to_string(&mut xml).expect("utf-8");
@@ -109,22 +109,22 @@ fn notes_formatting_survives_a_round_trip() {
 #[test]
 fn empty_notes_slide_is_preserved_on_save_and_reopen() {
     let raw = empty_notes_deck();
-    let p = deckcraft_pptx::import(&raw).expect("import");
+    let p = visionslide_pptx::import(&raw).expect("import");
     assert!(p.slides[0].notes.is_empty(), "imported notes text is empty");
     assert!(p.slides[0].has_notes_slide, "slide notes presence is captured");
 
-    let saved = deckcraft_pptx::export(&p).expect("export");
+    let saved = visionslide_pptx::export(&p).expect("export");
     let mut z = zip::ZipArchive::new(Cursor::new(&saved)).expect("zip");
     assert!(z.by_name(NOTES).is_ok(), "empty notes slide part is kept in saved package");
     let mut rels_xml = String::new();
     z.by_name("ppt/slides/_rels/slide1.xml.rels").expect("slide rels").read_to_string(&mut rels_xml).expect("read slide rels");
     assert!(rels_xml.contains("notesSlide"), "slide points to notes slide: {rels_xml}");
 
-    let again = deckcraft_pptx::import(&saved).expect("reimport");
+    let again = visionslide_pptx::import(&saved).expect("reimport");
     assert!(again.slides[0].notes.is_empty());
     assert!(again.slides[0].has_notes_slide, "notes slide presence survives roundtrip");
 
-    let saved_again = deckcraft_pptx::export(&again).expect("export again");
+    let saved_again = visionslide_pptx::export(&again).expect("export again");
     let mut z2 = zip::ZipArchive::new(Cursor::new(saved_again)).expect("zip");
     assert!(z2.by_name(NOTES).is_ok(), "empty notes slide part is kept on subsequent export");
 }

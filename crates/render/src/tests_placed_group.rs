@@ -2,16 +2,16 @@
 //! the slide draws it: at the shape's size on the slide, with font sizes and insets in points.
 
 use super::{Fill, Point, place_slide};
-use deckcraft_model::style::ColorRef;
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{Presentation, Shape, ShapeId, ShapeKind, Xfrm};
+use visionslide_model::style::ColorRef;
+use visionslide_model::text::TextBody;
+use visionslide_model::{Presentation, Shape, ShapeId, ShapeKind, Xfrm};
 
 /// A deck whose slide shows a shape at (100, 100), 400 × 200 points, with 24 pt black text: on its
 /// own, or inside a group whose child space is `scale` times smaller than the group.
 fn deck(scale: Option<f64>) -> Presentation {
     let mut body = TextBody::from_text("Placed where it is drawn");
     body.paragraphs[0].runs[0].props.size = Some(24.0);
-    body.paragraphs[0].runs[0].props.fill = Some(Fill::solid(ColorRef::rgb(deckcraft_color::Rgba::BLACK)));
+    body.paragraphs[0].runs[0].props.fill = Some(Fill::solid(ColorRef::rgb(visionslide_color::Rgba::BLACK)));
     let shape = match scale {
         None => Shape { id: ShapeId(701), xfrm: Some(Xfrm::new(100.0, 100.0, 400.0, 200.0)), text: Some(body), ..Default::default() },
         Some(k) => {

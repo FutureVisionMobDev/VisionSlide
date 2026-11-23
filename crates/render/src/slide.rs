@@ -19,7 +19,7 @@ pub fn needs_filters(pres: &Presentation, slide: &Slide) -> bool {
     let Some(rctx) = Ctx::for_slide(pres, slide) else { return false };
     let mut any = false;
     let mut check = |shapes: &[Shape]| {
-        deckcraft_model::walk(shapes, &mut |s, _| {
+        visionslide_model::walk(shapes, &mut |s, _| {
             if any {
                 return;
             }
@@ -41,7 +41,7 @@ pub fn needs_filters(pres: &Presentation, slide: &Slide) -> bool {
 /// style, or in the master's or presentation's text styles it inherits)? Such text is blurred,
 /// which needs filters.
 fn text_has_effects(rctx: &Ctx, s: &Shape) -> bool {
-    use deckcraft_model::text::{ListStyle, RunProps};
+    use visionslide_model::text::{ListStyle, RunProps};
     let fx = |r: &RunProps| r.shadow.as_ref().is_some_and(|s| !s.inner) || r.glow.as_ref().is_some_and(|g| g.radius > 0.0);
     let styled = |l: &ListStyle| l.levels.iter().flatten().any(|lv| fx(&lv.run));
     let Some(t) = &s.text else { return false };

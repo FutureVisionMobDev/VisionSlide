@@ -2,7 +2,7 @@
 
 > **Last reviewed:** 2026-10-14 · **Last updated:** 2026-10-31 · **Change:** minor (Review › Language offers Serbian in Cyrillic and Latin, each with its own dictionary; previous: minor, opt-in native LXGW WenKai Lite fallback and interface CJK tests; local implementation only, managed validation pending; previous: minor, IME composition underlined in table cells; previous: minor, IME composition and CJK interface text, #101; previous: major, created) · **Target:** Microsoft PowerPoint for Mac 16.113 (Microsoft 365)
 
-DeckCraft's interface is English only today: strings are literals in the UI and engine code, with
+VisionSlide's interface is English only today: strings are literals in the UI and engine code, with
 no catalog and no language switch. Requests: #15 (follow the system language), #30 and PR #34
 (Ukrainian, open). Dimension score: **~8% ready** (estimated: English complete, slide-text script
 support partly there), **55–90 h** to parity plus native-speaker review.
@@ -51,7 +51,7 @@ the next re-measure.
 ## Proofing languages
 
 PowerPoint checks spelling in dozens of languages and lets each run carry a proofing language.
-DeckCraft keeps `a:rPr/@lang` on round trip and checks each run in its own language against the
+VisionSlide keeps `a:rPr/@lang` on round trip and checks each run in its own language against the
 Hunspell dictionaries installed on the system (`crates/engine/src/spell.rs`), falling back to a
 built-in list of common English misspellings when there is none (`review.spelling`); see
 [gaps.md](gaps.md#proofing-spelling-thesaurus-autocorrect).

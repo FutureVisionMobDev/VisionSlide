@@ -1,11 +1,11 @@
 //! Format Background pane: picture transparency, tiling, and Apply to All.
 
-use deckcraft_engine::Session;
-use deckcraft_model::style::PictureMode;
-use deckcraft_model::{Background, Fill};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use serde_json::json;
+use visionslide_engine::Session;
+use visionslide_model::style::PictureMode;
+use visionslide_model::{Background, Fill};
 
 use crate::{Services, SlideApp};
 

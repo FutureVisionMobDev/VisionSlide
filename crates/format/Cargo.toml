@@ -1,9 +1,9 @@
 [package]
-name = "deckcraft-format"
+name = "visionslide-format"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft native file format (.deckcraft: zip of a JSON manifest plus media) and outline text import/export"
+description = "VisionSlide native file format (.visionslide: zip of a JSON manifest plus media) and outline text import/export"
 
 [lints]
 workspace = true
@@ -11,7 +11,7 @@ workspace = true
 [dependencies]
 craft-deckcraft-format = { workspace = true }
 craft-rtf = { workspace = true }
-deckcraft-model = { workspace = true }
+visionslide-model = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

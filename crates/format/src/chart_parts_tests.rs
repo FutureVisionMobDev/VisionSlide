@@ -2,9 +2,9 @@ use std::io::{Cursor, Write};
 use std::sync::Arc;
 
 use super::{Budget, Presentation, load, load_checked, load_within, read_entry, read_entry_max, save};
-use deckcraft_model::chart::{Chart, ChartPart, ChartRel, ChartType};
-use deckcraft_model::{Master, Shape, ShapeId, ShapeKind};
 use serde_json::{Value, json};
+use visionslide_model::chart::{Chart, ChartPart, ChartRel, ChartType};
+use visionslide_model::{Master, Shape, ShapeId, ShapeKind};
 
 const PART: &str = "ppt/embeddings/owned.xlsx";
 

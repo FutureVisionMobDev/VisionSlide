@@ -1,12 +1,12 @@
 //! Home ▸ Font and Paragraph, Format menu: character, paragraph and text box formatting, and
 //! the Format Painter.
 
-use deckcraft_model::edit as ed;
-use deckcraft_model::resolve;
-use deckcraft_model::text::{Align, Anchor, AutoFit, Bullet, Caps, ParaProps, RunProps, Spacing, Strike, TabStop, TextDir};
-use deckcraft_model::{ColorRef, ColorTransform, Effects, Fill, Line, SchemeSlot, Shape, ShapeKind};
 use serde_json::{Value, json};
 use std::sync::Arc;
+use visionslide_model::edit as ed;
+use visionslide_model::resolve;
+use visionslide_model::text::{Align, Anchor, AutoFit, Bullet, Caps, ParaProps, RunProps, Spacing, Strike, TabStop, TextDir};
+use visionslide_model::{ColorRef, ColorTransform, Effects, Fill, Line, SchemeSlot, Shape, ShapeKind};
 
 use super::text::{format_body, format_para, format_run, format_run_levels};
 use super::{
@@ -14,7 +14,7 @@ use super::{
     has_text_or_shapes, ids_param, ok, str_param,
 };
 use crate::{Result, Session};
-use deckcraft_model::ShapeId;
+use visionslide_model::ShapeId;
 
 mod font;
 mod painter;
@@ -321,9 +321,9 @@ mod ruler_tests;
 
 #[cfg(test)]
 mod tests {
-    use deckcraft_model::text::{Align, Caps, ParaProps, Spacing, Strike};
-    use deckcraft_model::{ColorBase, Fill, SchemeSlot};
     use serde_json::json;
+    use visionslide_model::text::{Align, Caps, ParaProps, Spacing, Strike};
+    use visionslide_model::{ColorBase, Fill, SchemeSlot};
 
     use super::*;
     use crate::{Session, UiRequest};
@@ -523,7 +523,7 @@ mod tests {
         assert!(para(&s).indent.is_none());
     }
 
-    fn body(s: &Session) -> deckcraft_model::text::BodyProps {
+    fn body(s: &Session) -> visionslide_model::text::BodyProps {
         s.doc().unwrap().selected_shapes().first().and_then(|sh| sh.text.as_ref()).map(|t| t.body.clone()).unwrap_or_default()
     }
 

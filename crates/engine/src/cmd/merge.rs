@@ -2,12 +2,12 @@
 //! the outlines of the selected shapes. The result takes the formatting of the first selected
 //! shape, like PowerPoint.
 
-use deckcraft_geom::{PathEl, Rect, Xfrm};
-use deckcraft_model::{CustomPath, Geom, Shape, ShapeId, ShapeKind};
 use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
 use i_overlay::float::single::SingleFloatOverlay;
 use serde_json::{Value, json};
+use visionslide_geom::{PathEl, Rect, Xfrm};
+use visionslide_model::{CustomPath, Geom, Shape, ShapeId, ShapeKind};
 
 use super::{CommandSpec, NO_ID_SPACE, bad, cmd, has_two, str_param, targets, xfrm_of};
 use crate::{Result, Session};
@@ -44,24 +44,24 @@ fn can_merge(s: &Session) -> std::result::Result<(), String> {
 
 /// The filled outline of `s` in slide points (curves flattened). A text box with no fill and no
 /// outline is its letters, as in PowerPoint (merging text with a picture fills the letters).
-fn area_of(doc: &deckcraft_model::Presentation, sel: &crate::Selection, s: &Shape) -> Area {
+fn area_of(doc: &visionslide_model::Presentation, sel: &crate::Selection, s: &Shape) -> Area {
     if let Some((letters, _)) = letters_of(doc, sel, s) {
         return letters;
     }
     let x = xfrm_of(doc, sel, s);
-    let geo = deckcraft_render::shape_geometry(s, x.w, x.h);
+    let geo = visionslide_render::shape_geometry(s, x.w, x.h);
     let a = x.affine();
     let mut out: Area = vec![];
-    for sp in geo.paths.iter().filter(|p| p.fill != deckcraft_geom::preset::FillMode::None) {
+    for sp in geo.paths.iter().filter(|p| p.fill != visionslide_geom::preset::FillMode::None) {
         flatten(&sp.path, a, &mut out);
     }
     out
 }
 
 /// The letters of a text box with no fill and no outline, in slide points, and their colour.
-fn letters_of(doc: &deckcraft_model::Presentation, sel: &crate::Selection, s: &Shape) -> Option<(Area, Option<deckcraft_color::Rgba>)> {
-    use deckcraft_model::resolve;
-    use deckcraft_model::style::Fill;
+fn letters_of(doc: &visionslide_model::Presentation, sel: &crate::Selection, s: &Shape) -> Option<(Area, Option<visionslide_color::Rgba>)> {
+    use visionslide_model::resolve;
+    use visionslide_model::style::Fill;
     if !matches!(s.kind, ShapeKind::Shape) || s.text.as_ref().is_none_or(|t| t.is_empty()) {
         return None;
     }
@@ -70,14 +70,14 @@ fn letters_of(doc: &deckcraft_model::Presentation, sel: &crate::Selection, s: &S
     if !none(resolve::fill(&ctx, s).0.as_ref()) || !none(resolve::line(&ctx, s).0.fill.as_ref()) {
         return None;
     }
-    let (path, colour) = deckcraft_render::text_outline(&ctx, s, xfrm_of(doc, sel, s).affine());
+    let (path, colour) = visionslide_render::text_outline(&ctx, s, xfrm_of(doc, sel, s).affine());
     let mut out: Area = vec![];
-    flatten(&path, deckcraft_geom::Affine::IDENTITY, &mut out);
+    flatten(&path, visionslide_geom::Affine::IDENTITY, &mut out);
     (!out.is_empty()).then_some((out, colour))
 }
 
 /// Append the closed polygons of `path` (mapped by `a`) to `out`.
-fn flatten(path: &deckcraft_geom::BezPath, a: deckcraft_geom::Affine, out: &mut Area) {
+fn flatten(path: &visionslide_geom::BezPath, a: visionslide_geom::Affine, out: &mut Area) {
     let mut cur: Vec<[f64; 2]> = vec![];
     let flush = |cur: &mut Vec<[f64; 2]>, out: &mut Area| {
         if cur.len() > 2 {
@@ -86,7 +86,7 @@ fn flatten(path: &deckcraft_geom::BezPath, a: deckcraft_geom::Affine, out: &mut 
             cur.clear();
         }
     };
-    deckcraft_geom::preset_flatten(path, &mut |el| match el {
+    visionslide_geom::preset_flatten(path, &mut |el| match el {
         PathEl::MoveTo(p) => {
             flush(&mut cur, out);
             let q = a * p;
@@ -104,8 +104,8 @@ fn flatten(path: &deckcraft_geom::BezPath, a: deckcraft_geom::Affine, out: &mut 
 
 /// Keep a picture where it was on the slide when its box becomes `to`: crop it to the new box.
 /// Only for upright, unflipped pictures stretched over their box.
-fn recrop(fill: &mut deckcraft_model::style::PictureFill, from: &Xfrm, to: &Xfrm) {
-    use deckcraft_model::style::PictureMode;
+fn recrop(fill: &mut visionslide_model::style::PictureFill, from: &Xfrm, to: &Xfrm) {
+    use visionslide_model::style::PictureMode;
     if from.rot != 0.0 || from.flip_h || from.flip_v || !matches!(fill.mode, PictureMode::Stretch { fill_rect } if fill_rect == [0.0; 4]) {
         return;
     }
@@ -224,8 +224,8 @@ fn merge(s: &mut Session, p: &Value) -> Result<Value> {
     // Letters merged become shapes filled with the text's colour.
     let letters = letters_of(&st.doc, &st.selection, &template);
     if let Some((_, colour)) = &letters {
-        use deckcraft_model::style::{ColorRef, Fill, Line};
-        template.fill = Some(Fill::solid(ColorRef::rgb(colour.unwrap_or(deckcraft_color::Rgba::BLACK))));
+        use visionslide_model::style::{ColorRef, Fill, Line};
+        template.fill = Some(Fill::solid(ColorRef::rgb(colour.unwrap_or(visionslide_color::Rgba::BLACK))));
         template.line = Some(Line { fill: Some(Fill::None), ..Default::default() });
         template.text_box = false;
     }
@@ -280,8 +280,8 @@ fn merge(s: &mut Session, p: &Value) -> Result<Value> {
 
 #[cfg(test)]
 mod tests {
-    use deckcraft_model::{ShapeId, ShapeKind};
     use serde_json::json;
+    use visionslide_model::{ShapeId, ShapeKind};
 
     use super::{Area, area_of, area_size, letters_of, merge_areas};
     use crate::Session;
@@ -361,7 +361,7 @@ mod tests {
         let st = s.doc().expect("doc");
         let out = st.shape(ShapeId(r["ids"][0].as_u64().expect("id") as u32)).expect("result");
         assert!(matches!(out.kind, ShapeKind::Shape) && out.text.is_none());
-        assert!(matches!(out.fill, Some(deckcraft_model::style::Fill::Solid { .. })), "{:?}", out.fill);
+        assert!(matches!(out.fill, Some(visionslide_model::style::Fill::Solid { .. })), "{:?}", out.fill);
     }
 
     #[test]

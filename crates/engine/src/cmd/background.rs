@@ -5,8 +5,8 @@
 
 use std::collections::VecDeque;
 
-use deckcraft_model::{ShapeId, ShapeKind};
 use serde_json::{Value, json};
+use visionslide_model::{ShapeId, ShapeKind};
 
 use super::{CommandSpec, NO_ID_SPACE, bad, cmd, f64_or, has_selection, targets};
 use crate::{Result, Session};
@@ -165,13 +165,13 @@ fn remove_background(s: &mut Session, p: &Value) -> Result<Value> {
     }
     let n = done.len();
     s.edit(|doc, sel| {
-        let added: Vec<(ShapeId, deckcraft_model::MediaId)> = done
+        let added: Vec<(ShapeId, visionslide_model::MediaId)> = done
             .into_iter()
             .map(|(id, name, png)| Ok((id, doc.add_media(&name, "image/png", png).ok_or_else(|| bad("picture.removeBackground", NO_ID_SPACE))?)))
             .collect::<Result<_>>()?;
         let shapes = crate::shapes_mut(doc, sel).ok_or_else(|| bad("picture.removeBackground", "no slide"))?;
         for (id, media) in added {
-            if let Some(sh) = deckcraft_model::find_shape_mut(shapes, id)
+            if let Some(sh) = visionslide_model::find_shape_mut(shapes, id)
                 && let ShapeKind::Picture { fill } = &mut sh.kind
             {
                 fill.media = media;
@@ -184,8 +184,8 @@ fn remove_background(s: &mut Session, p: &Value) -> Result<Value> {
 
 #[cfg(test)]
 mod tests {
-    use deckcraft_model::{ShapeId, ShapeKind};
     use serde_json::json;
+    use visionslide_model::{ShapeId, ShapeKind};
 
     use super::*;
     use crate::Session;

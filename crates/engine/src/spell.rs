@@ -6,8 +6,8 @@
 //! `KEEPCASE`, `TRY`, `REP` and `WORDCHARS`. Compounding, `ICONV`/`OCONV` and morphology are not
 //! read; words they would accept are reported as misspelt.
 //!
-//! No dictionary ships with DeckCraft. They are looked up in the folders the system's own spell
-//! checkers use (and `DECKCRAFT_DICTIONARIES`), so whatever the user installed is used.
+//! No dictionary ships with VisionSlide. They are looked up in the folders the system's own spell
+//! checkers use (and `VISIONSLIDE_DICTIONARIES`), so whatever the user installed is used.
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -505,19 +505,19 @@ fn strip_start(w: &[char], add: &str, strip: &str) -> Option<Vec<char>> {
 /// The folders searched for dictionaries, in order.
 pub fn search_dirs() -> Vec<PathBuf> {
     let mut out = vec![];
-    if let Some(v) = std::env::var_os("DECKCRAFT_DICTIONARIES") {
+    if let Some(v) = std::env::var_os("VISIONSLIDE_DICTIONARIES") {
         out.extend(std::env::split_paths(&v));
     }
     let home = std::env::var_os("HOME").map(PathBuf::from);
     if cfg!(target_os = "macos") {
-        out.extend(home.iter().map(|h| h.join("Library/Application Support/DeckCraft/Dictionaries")));
+        out.extend(home.iter().map(|h| h.join("Library/Application Support/VisionSlide/Dictionaries")));
         out.extend(home.iter().map(|h| h.join("Library/Spelling")));
         out.push("/Library/Spelling".into());
     } else if cfg!(target_os = "windows") {
-        out.extend(std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("DeckCraft").join("Dictionaries")));
+        out.extend(std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("VisionSlide").join("Dictionaries")));
     } else {
         let data = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from).or_else(|| home.as_ref().map(|h| h.join(".local/share")));
-        out.extend(data.iter().map(|d| d.join("deckcraft/dictionaries")));
+        out.extend(data.iter().map(|d| d.join("visionslide/dictionaries")));
         out.extend(data.iter().map(|d| d.join("hunspell")));
         for d in ["/usr/share/hunspell", "/usr/share/myspell", "/usr/share/myspell/dicts", "/usr/local/share/hunspell", "/app/share/hunspell"] {
             out.push(d.into());
@@ -686,7 +686,7 @@ pub fn dictionary(lang: &str) -> Option<Arc<Dictionary>> {
     loaded
 }
 
-/// Where Add to Dictionary keeps words: `user.dic` in DeckCraft's own dictionaries folder, one
+/// Where Add to Dictionary keeps words: `user.dic` in VisionSlide's own dictionaries folder, one
 /// word per line (the Hunspell `.dic` format without a count).
 pub fn user_dictionary_path() -> Option<PathBuf> {
     if let Ok(p) = user_override().lock()
@@ -696,14 +696,14 @@ pub fn user_dictionary_path() -> Option<PathBuf> {
     }
     let home = std::env::var_os("HOME").map(PathBuf::from);
     let dir = if cfg!(target_os = "macos") {
-        home.map(|h| h.join("Library/Application Support/DeckCraft/Dictionaries"))
+        home.map(|h| h.join("Library/Application Support/VisionSlide/Dictionaries"))
     } else if cfg!(target_os = "windows") {
-        std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("DeckCraft").join("Dictionaries"))
+        std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("VisionSlide").join("Dictionaries"))
     } else {
         std::env::var_os("XDG_DATA_HOME")
             .map(PathBuf::from)
             .or_else(|| home.map(|h| h.join(".local/share")))
-            .map(|d| d.join("deckcraft/dictionaries"))
+            .map(|d| d.join("visionslide/dictionaries"))
     };
     dir.map(|d| d.join("user.dic"))
 }
@@ -801,7 +801,7 @@ const MAX_LANG_LEN: usize = 64;
 /// The words of `p`, each with its run's language (`lang` on the run, else `default`). Words
 /// with digits are skipped; apostrophes inside a word belong to it; hyphenated words are checked
 /// part by part. A language over [`MAX_LANG_LEN`] counts as none.
-pub fn paragraph_words(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Word> {
+pub fn paragraph_words(p: &visionslide_model::Paragraph, default: &str) -> Vec<Word> {
     let mut chars: Vec<(char, usize)> = vec![];
     for (ri, r) in p.runs.iter().enumerate() {
         chars.extend(r.content().chars().map(|c| (c, ri)));
@@ -817,7 +817,7 @@ pub fn paragraph_words(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Wor
             .to_string()
     };
     // Combining marks (decomposed accents) belong to the letter before them.
-    let inside = |c: char| c.is_alphanumeric() || deckcraft_model::words::is_combining_mark(c) || c == '\'' || c == '’' || c == '-';
+    let inside = |c: char| c.is_alphanumeric() || visionslide_model::words::is_combining_mark(c) || c == '\'' || c == '’' || c == '-';
     let mut out = vec![];
     let mut i = 0;
     while i < chars.len() {
@@ -836,7 +836,7 @@ pub fn paragraph_words(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Wor
         // Trim back to the last letter or digit, keeping only the marks that sit on it
         // (a mark on a trailing apostrophe goes with the apostrophe).
         while b > a {
-            let k = (a..b).rev().find(|&k| !deckcraft_model::words::is_combining_mark(chars[k].0)).unwrap_or(a);
+            let k = (a..b).rev().find(|&k| !visionslide_model::words::is_combining_mark(chars[k].0)).unwrap_or(a);
             if chars[k].0.is_alphanumeric() {
                 break;
             }
@@ -866,7 +866,7 @@ pub fn paragraph_words(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Wor
 
 /// Words that repeat the word just before them (`the the`), with only spaces between, as
 /// PowerPoint flags them. Hyphenated parts and different languages don't count.
-pub fn repeated(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Word> {
+pub fn repeated(p: &visionslide_model::Paragraph, default: &str) -> Vec<Word> {
     let words = paragraph_words(p, default);
     let chars: Vec<char> = p.runs.iter().flat_map(|r| r.content().chars()).collect();
     let mut out = vec![];
@@ -886,7 +886,7 @@ pub fn repeated(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Word> {
 
 /// The misspelt and repeated words of `p`, each checked in its own language (languages with no dictionary
 /// installed are skipped), leaving out `ignore` (lower-case).
-pub fn misspelt(p: &deckcraft_model::Paragraph, default: &str, ignore: &[String]) -> Vec<Word> {
+pub fn misspelt(p: &visionslide_model::Paragraph, default: &str, ignore: &[String]) -> Vec<Word> {
     let mut dicts: HashMap<String, Option<Arc<Dictionary>>> = HashMap::new();
     paragraph_words(p, default)
         .into_iter()
@@ -938,14 +938,14 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn nfd_word_not_split() {
-        let p = deckcraft_model::Paragraph::new("Das na\u{ef}ve Caf\u{e9} und cafe\u{301} na\u{308}ive");
+        let p = visionslide_model::Paragraph::new("Das na\u{ef}ve Caf\u{e9} und cafe\u{301} na\u{308}ive");
         let w: Vec<String> = paragraph_words(&p, "en-US").into_iter().map(|w| w.text).collect();
         assert_eq!(w, ["Das", "na\u{ef}ve", "Caf\u{e9}", "und", "cafe\u{301}", "na\u{308}ive"]);
     }
 
     #[test]
     fn a_mark_on_trailing_punctuation_is_trimmed_with_it() {
-        let p = deckcraft_model::Paragraph::new("word'\u{301} cafe\u{301}' x");
+        let p = visionslide_model::Paragraph::new("word'\u{301} cafe\u{301}' x");
         let w: Vec<String> = paragraph_words(&p, "en-US").into_iter().map(|w| w.text).collect();
         assert_eq!(w, ["word", "cafe\u{301}", "x"]);
     }
@@ -970,7 +970,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn a_language_tag_cannot_leave_the_dictionary_folders() {
-        let dir = std::env::temp_dir().join(format!("deckcraft-dict-lang-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("visionslide-dict-lang-{}", std::process::id()));
         let inner = dir.join("dicts");
         std::fs::create_dir_all(&inner).unwrap();
         std::fs::write(dir.join("evil.aff"), "SET UTF-8\n").unwrap();
@@ -1045,7 +1045,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn runs_give_words_their_language() {
-        use deckcraft_model::{Paragraph, Run, RunProps};
+        use visionslide_model::{Paragraph, Run, RunProps};
         let p = Paragraph {
             runs: vec![
                 Run::with("Hello wor", RunProps { lang: Some("en-GB".into()), ..Default::default() }),
@@ -1070,7 +1070,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn repeated_words_and_no_proof_runs() {
-        use deckcraft_model::{Paragraph, Run, RunProps};
+        use visionslide_model::{Paragraph, Run, RunProps};
         let p = Paragraph::new("See the the plan, plan. The THE end");
         let r: Vec<(usize, usize, Option<usize>)> = repeated(&p, "en-US").iter().map(|w| (w.start, w.end, w.repeated)).collect();
         assert_eq!(r, vec![(8, 11, Some(7)), (28, 31, Some(27))]);
@@ -1084,11 +1084,11 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn a_confined_client_cannot_write_the_user_dictionary_outside_its_roots() {
-        let root = std::env::temp_dir().join(format!("deckcraft-dict-root-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("visionslide-dict-root-{}", std::process::id()));
         std::fs::create_dir_all(&root).unwrap();
         let roots = crate::file_access::AutomationRoots::new(std::slice::from_ref(&root), std::slice::from_ref(&root)).unwrap();
         // The user dictionary is a file of its own outside `root`, not whatever HOME points at.
-        let outside = std::env::temp_dir().join(format!("deckcraft-dict-outside-{}", std::process::id()));
+        let outside = std::env::temp_dir().join(format!("visionslide-dict-outside-{}", std::process::id()));
         set_user_dictionary_path(outside.join("user.dic"));
         let r = crate::file_access::confine(roots.as_ref(), || add_user_word("zqxconfinedword"));
         assert_eq!(r.map_err(|e| e.kind()), Err(std::io::ErrorKind::PermissionDenied));
@@ -1098,7 +1098,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn a_long_paragraph_with_a_huge_language_is_checked_in_linear_work() {
-        use deckcraft_model::{Paragraph, Run, RunProps};
+        use visionslide_model::{Paragraph, Run, RunProps};
         // 100,000 copies of one word under a 1 MB language value: every word after the first is
         // a repeat, and no word carries a copy of the value.
         let lang = "x".repeat(1 << 20);
@@ -1125,7 +1125,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn dictionaries_are_found_by_locale_then_language() {
-        let dir = std::env::temp_dir().join(format!("deckcraft-dict-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("visionslide-dict-{}", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         for n in ["en_GB", "de_DE"] {
             let _ = std::fs::write(dir.join(format!("{n}.aff")), "");
@@ -1145,7 +1145,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
     /// (`sh_RS`, `sh_YU`). A dictionary of the other script is never used: it would flag every word.
     #[test]
     fn serbian_finds_the_dictionary_of_its_script() {
-        let dir = std::env::temp_dir().join(format!("deckcraft-dict-sr-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("visionslide-dict-sr-{}", std::process::id()));
         let stem = |names: &[&str], l: &str| {
             let _ = std::fs::remove_dir_all(&dir);
             let _ = std::fs::create_dir_all(&dir);

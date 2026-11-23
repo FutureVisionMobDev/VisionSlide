@@ -1,13 +1,13 @@
 //! Colour glyphs (OpenType `COLR` v0 and v1, colours from `CPAL`), as colour emoji fonts draw
 //! them: layers of glyph outlines filled with solid colours or gradients.
 
-use deckcraft_color::Rgba;
-use deckcraft_fonts::FontFace;
 use kurbo::{Affine, BezPath, Point, Rect};
 use skrifa::color::{Brush, ColorPainter, ColorStop, CompositeMode, Extend, Transform};
 use skrifa::raw::types::BoundingBox;
 use skrifa::{GlyphId, MetadataProvider};
 use vello_cpu::{RenderContext, peniko};
+use visionslide_color::Rgba;
+use visionslide_fonts::FontFace;
 
 /// Nesting depth of clips and layers past which a glyph opens no more (hostile fonts).
 const MAX_DEPTH: usize = 64;
@@ -124,7 +124,7 @@ impl Painter<'_> {
 
     /// The glyph outline in font units, y up.
     fn outline(&self, gid: GlyphId) -> BezPath {
-        let p = deckcraft_fonts::FontDb::global().outline(self.face, gid.to_u32());
+        let p = visionslide_fonts::FontDb::global().outline(self.face, gid.to_u32());
         Affine::scale_non_uniform(1.0, -1.0) * (*p).clone()
     }
 

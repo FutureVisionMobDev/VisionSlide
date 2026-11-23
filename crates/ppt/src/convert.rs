@@ -1,17 +1,17 @@
-//! Building the DeckCraft model from the parsed `.ppt` structure.
+//! Building the VisionSlide model from the parsed `.ppt` structure.
 //!
-//! Each main master becomes a DeckCraft master (with the standard layouts, its own colours,
+//! Each main master becomes a VisionSlide master (with the standard layouts, its own colours,
 //! fonts, text styles, background and decorative shapes); a title master becomes a layout of its
 //! main master. Slide shapes keep their own boxes, and their text carries its formatting resolved
-//! against the master's text styles, so it draws the same whatever DeckCraft's layouts hold.
+//! against the master's text styles, so it draws the same whatever VisionSlide's layouts hold.
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deckcraft_color::{ColorTransform, Rgba, SchemeSlot};
-use deckcraft_model::style::{Dash, LineCap, LineEnd, LineJoin, PictureFill, PictureMode, Shadow};
-use deckcraft_model::text::{Align, Anchor as TextAnchor, AutoFit, BodyProps, Bullet, LevelStyle, ListStyle, ParaProps, RunKind, Spacing, TabStop};
-use deckcraft_model::{
+use visionslide_color::{ColorTransform, Rgba, SchemeSlot};
+use visionslide_model::style::{Dash, LineCap, LineEnd, LineJoin, PictureFill, PictureMode, Shadow};
+use visionslide_model::text::{Align, Anchor as TextAnchor, AutoFit, BodyProps, Bullet, LevelStyle, ListStyle, ParaProps, RunKind, Spacing, TabStop};
+use visionslide_model::{
     Background, ColorRef, Effects, Fill, Layout, LayoutId, LayoutType, Line, MediaId, Paragraph, PhType, Placeholder, Presentation, Run, RunProps,
     Shape, ShapeId, ShapeKind, Size, Slide, SlideId, TextBody, Theme, Xfrm, defaults,
 };
@@ -107,7 +107,7 @@ pub fn convert<'a>(d: &Doc<'a>, pictures: &'a [u8]) -> Presentation {
     };
     let environment = d.document.child(rt::ENVIRONMENT);
     if let Some(hf) = doc::headers_footers(&d.document) {
-        cx.p.header_footer = deckcraft_model::HeaderFooter {
+        cx.p.header_footer = visionslide_model::HeaderFooter {
             date: hf.date,
             slide_number: hf.slide_number,
             footer: hf.footer,
@@ -585,7 +585,7 @@ impl<'a> Ctx<'a> {
             },
             // Gradients.
             t @ 4..=8 => {
-                use deckcraft_model::style::{Gradient, GradientShape};
+                use visionslide_model::style::{Gradient, GradientShape};
                 let focus = props.get(prop::FILL_FOCUS).map_or(0, |v| v as i32).clamp(-100, 100);
                 let stops = gradient_stops(focus, &fg, &bg);
                 let shape = if matches!(t, 5 | 6) {
@@ -624,11 +624,11 @@ impl<'a> Ctx<'a> {
             .into(),
         });
         l.compound = props.get(prop::LINE_STYLE).map(|v| match v {
-            1 => deckcraft_model::style::Compound::Double,
-            2 => deckcraft_model::style::Compound::ThickThin,
-            3 => deckcraft_model::style::Compound::ThinThick,
-            4 => deckcraft_model::style::Compound::Triple,
-            _ => deckcraft_model::style::Compound::Single,
+            1 => visionslide_model::style::Compound::Double,
+            2 => visionslide_model::style::Compound::ThickThin,
+            3 => visionslide_model::style::Compound::ThinThick,
+            4 => visionslide_model::style::Compound::Triple,
+            _ => visionslide_model::style::Compound::Single,
         });
         l.join = props.get(prop::LINE_JOIN).map(|v| match v {
             0 => LineJoin::Bevel,
@@ -934,8 +934,8 @@ fn text_shadow(scheme: &Scheme) -> Shadow {
 /// A shaded fill's stops ([MS-ODRAW] `fillFocus`: the position of the last colour, the back
 /// colour). Focus 0 starts at the back colour and ends at the fill colour, ±100 the other way; in
 /// between, the back colour sits at that point with the fill colour at both ends.
-fn gradient_stops(focus: i32, fg: &ColorRef, bg: &ColorRef) -> Vec<deckcraft_model::style::GradientStop> {
-    use deckcraft_model::style::GradientStop;
+fn gradient_stops(focus: i32, fg: &ColorRef, bg: &ColorRef) -> Vec<visionslide_model::style::GradientStop> {
+    use visionslide_model::style::GradientStop;
     let stop = |pos: f64, c: &ColorRef| GradientStop { pos, color: c.clone() };
     match focus {
         0 => vec![stop(0.0, bg), stop(1.0, fg)],
@@ -1010,7 +1010,7 @@ fn default_name(raw: &RawShape) -> String {
     }
 }
 
-/// `PlaceholderEnum` as a DeckCraft placeholder type.
+/// `PlaceholderEnum` as a VisionSlide placeholder type.
 fn ph_type(kind: u8) -> Option<PhType> {
     Some(match kind {
         0x01 | 0x0D | 0x11 => PhType::Title,
@@ -1038,7 +1038,7 @@ fn same_family(a: PhType, b: PhType) -> bool {
     a == b || (title(a) && title(b))
 }
 
-/// `SlideLayoutType` as a DeckCraft layout.
+/// `SlideLayoutType` as a VisionSlide layout.
 fn layout_kind(geom: u32) -> LayoutType {
     match geom {
         0 => LayoutType::Title,
@@ -1062,7 +1062,7 @@ mod tests {
     #[test]
     fn shaded_fills_put_the_back_colour_at_the_focus() {
         let (fg, bg) = (ColorRef::rgb(Rgba::rgb(255, 0, 0)), ColorRef::rgb(Rgba::rgb(0, 0, 255)));
-        let at = |stops: &[deckcraft_model::style::GradientStop]| stops.iter().map(|s| (s.pos, s.color == fg)).collect::<Vec<_>>();
+        let at = |stops: &[visionslide_model::style::GradientStop]| stops.iter().map(|s| (s.pos, s.color == fg)).collect::<Vec<_>>();
         assert_eq!(at(&gradient_stops(0, &fg, &bg)), [(0.0, false), (1.0, true)]);
         assert_eq!(at(&gradient_stops(100, &fg, &bg)), [(0.0, true), (1.0, false)]);
         assert_eq!(at(&gradient_stops(-50, &fg, &bg)), [(0.0, true), (0.5, false), (1.0, true)]);

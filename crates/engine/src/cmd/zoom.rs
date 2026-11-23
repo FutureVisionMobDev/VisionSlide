@@ -7,11 +7,11 @@
 
 use std::sync::Arc;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::style::PictureFill;
-use deckcraft_model::text::{Action, Hyperlink, TextBody};
-use deckcraft_model::{LayoutType, Shape, ShapeId, ShapeKind, SlideId, defaults};
 use serde_json::{Value, json};
+use visionslide_geom::Xfrm;
+use visionslide_model::style::PictureFill;
+use visionslide_model::text::{Action, Hyperlink, TextBody};
+use visionslide_model::{LayoutType, Shape, ShapeId, ShapeKind, SlideId, defaults};
 
 use super::{CommandSpec, NO_ID_SPACE, bad, bool_or, cmd, has_slide, str_param};
 use crate::{Result, Session};

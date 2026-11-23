@@ -1,26 +1,26 @@
 [package]
-name = "deckcraft-engine"
+name = "visionslide-engine"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft engine: sessions, undo history, selection, the command registry every frontend dispatches through, and pointer tools"
+description = "VisionSlide engine: sessions, undo history, selection, the command registry every frontend dispatches through, and pointer tools"
 
 [lints]
 workspace = true
 
 [dependencies]
 craft-mime = { workspace = true }
-deckcraft-geom = { workspace = true }
-deckcraft-color = { workspace = true }
-deckcraft-model = { workspace = true }
-deckcraft-fonts = { workspace = true }
-deckcraft-text = { workspace = true }
-deckcraft-render = { workspace = true }
-deckcraft-pdf = { workspace = true }
-deckcraft-format = { workspace = true }
-deckcraft-pptx = { workspace = true }
-deckcraft-ppt = { workspace = true }
-deckcraft-media = { workspace = true }
+visionslide-geom = { workspace = true }
+visionslide-color = { workspace = true }
+visionslide-model = { workspace = true }
+visionslide-fonts = { workspace = true }
+visionslide-text = { workspace = true }
+visionslide-render = { workspace = true }
+visionslide-pdf = { workspace = true }
+visionslide-format = { workspace = true }
+visionslide-pptx = { workspace = true }
+visionslide-ppt = { workspace = true }
+visionslide-media = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 i_overlay = { workspace = true }
@@ -30,7 +30,7 @@ image = { workspace = true }
 chrono = { workspace = true }
 
 [dev-dependencies]
-deckcraft-anim = { workspace = true }
+visionslide-anim = { workspace = true }
 zip = { workspace = true }
 
 # The browser clock for comment timestamps (wasm has no std::time::SystemTime).

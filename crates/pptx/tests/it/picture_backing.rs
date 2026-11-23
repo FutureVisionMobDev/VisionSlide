@@ -1,9 +1,9 @@
 //! A picture's fill is a backing behind its transparent image, independent of its blip fill.
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
-use deckcraft_model::style::{Fill, PictureFill, PictureMode};
-use deckcraft_model::{ColorRef, Presentation, Shape, ShapeId, ShapeKind, Xfrm, defaults};
+use visionslide_color::Rgba;
+use visionslide_model::style::{Fill, PictureFill, PictureMode};
+use visionslide_model::{ColorRef, Presentation, Shape, ShapeId, ShapeKind, Xfrm, defaults};
 
 fn deck(fill: Option<Fill>, object: bool) -> Presentation {
     let mut p = defaults::new_presentation(None);
@@ -41,7 +41,7 @@ fn picture(p: &Presentation) -> &Shape {
 fn check_saves(mut p: Presentation, fill: Option<Fill>) {
     let expected_media = p.media[0].data.clone();
     for _ in 0..2 {
-        p = deckcraft_pptx::import(&deckcraft_pptx::export(&p).expect("export")).expect("import");
+        p = visionslide_pptx::import(&visionslide_pptx::export(&p).expect("export")).expect("import");
         let pic = picture(&p);
         assert_eq!(pic.fill, fill, "keep the backing separate from the picture's blip fill");
         assert_eq!(pic.xfrm, Some(Xfrm::new(20.0, 10.0, 80.0, 40.0)));

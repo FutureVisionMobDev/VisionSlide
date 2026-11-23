@@ -1,12 +1,12 @@
 //! Radar charts: one spoke per category, the value axis running up the first spoke, a polygon
 //! of gridlines per major unit and each series a closed polygon (filled for a filled radar).
 
-use deckcraft_color::Rgba;
-use deckcraft_model::chart::{Chart, ChartType};
-use deckcraft_model::resolve::Ctx;
-use deckcraft_model::text::{Align, Anchor};
 use kurbo::{Affine, BezPath, Point, Rect, Shape as _};
 use vello_cpu::RenderContext;
+use visionslide_color::Rgba;
+use visionslide_model::chart::{Chart, ChartType};
+use visionslide_model::resolve::Ctx;
+use visionslide_model::text::{Align, Anchor};
 
 use crate::chart::{label, series_fill, series_line};
 use crate::color;

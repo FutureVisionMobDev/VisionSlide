@@ -1,4 +1,4 @@
-//! Bidirectional conversion between DeckCraft's document model (`deckcraft_model`) and the
+//! Bidirectional conversion between VisionSlide's document model (`visionslide_model`) and the
 //! shared PresentationML/DrawingML model (`craft_pptx` / `craft_drawingml`).
 
 use std::sync::Arc;
@@ -10,46 +10,46 @@ use craft_drawingml::table as cd_table;
 use craft_drawingml::text as cd_text;
 use craft_drawingml::theme as cd_theme;
 use craft_pptx::anim as cp_anim;
-use deckcraft_model::anim as dm_anim;
-use deckcraft_model::chart as dm_chart;
-use deckcraft_model::style as dm_style;
-use deckcraft_model::table as dm_table;
-use deckcraft_model::text as dm_text;
-use deckcraft_model::theme as dm_theme;
+use visionslide_model::anim as dm_anim;
+use visionslide_model::chart as dm_chart;
+use visionslide_model::style as dm_style;
+use visionslide_model::table as dm_table;
+use visionslide_model::text as dm_text;
+use visionslide_model::theme as dm_theme;
 
 // ---------------------------------------------------------------------------
 // IDs
 // ---------------------------------------------------------------------------
 
-fn media_id_to(id: deckcraft_model::MediaId) -> craft_pptx::MediaId {
+fn media_id_to(id: visionslide_model::MediaId) -> craft_pptx::MediaId {
     craft_pptx::MediaId(id.0)
 }
-fn media_id_from(id: craft_pptx::MediaId) -> deckcraft_model::MediaId {
-    deckcraft_model::MediaId(id.0)
+fn media_id_from(id: craft_pptx::MediaId) -> visionslide_model::MediaId {
+    visionslide_model::MediaId(id.0)
 }
-fn slide_id_to(id: deckcraft_model::SlideId) -> craft_pptx::SlideId {
+fn slide_id_to(id: visionslide_model::SlideId) -> craft_pptx::SlideId {
     craft_pptx::SlideId(id.0)
 }
-fn slide_id_from(id: craft_pptx::SlideId) -> deckcraft_model::SlideId {
-    deckcraft_model::SlideId(id.0)
+fn slide_id_from(id: craft_pptx::SlideId) -> visionslide_model::SlideId {
+    visionslide_model::SlideId(id.0)
 }
-fn shape_id_to(id: deckcraft_model::ShapeId) -> craft_pptx::ShapeId {
+fn shape_id_to(id: visionslide_model::ShapeId) -> craft_pptx::ShapeId {
     craft_pptx::ShapeId(id.0)
 }
-fn shape_id_from(id: craft_pptx::ShapeId) -> deckcraft_model::ShapeId {
-    deckcraft_model::ShapeId(id.0)
+fn shape_id_from(id: craft_pptx::ShapeId) -> visionslide_model::ShapeId {
+    visionslide_model::ShapeId(id.0)
 }
-fn layout_id_to(id: deckcraft_model::LayoutId) -> craft_pptx::LayoutId {
+fn layout_id_to(id: visionslide_model::LayoutId) -> craft_pptx::LayoutId {
     craft_pptx::LayoutId(id.0)
 }
-fn layout_id_from(id: craft_pptx::LayoutId) -> deckcraft_model::LayoutId {
-    deckcraft_model::LayoutId(id.0)
+fn layout_id_from(id: craft_pptx::LayoutId) -> visionslide_model::LayoutId {
+    visionslide_model::LayoutId(id.0)
 }
-fn master_id_to(id: deckcraft_model::MasterId) -> craft_pptx::MasterId {
+fn master_id_to(id: visionslide_model::MasterId) -> craft_pptx::MasterId {
     craft_pptx::MasterId(id.0)
 }
-fn master_id_from(id: craft_pptx::MasterId) -> deckcraft_model::MasterId {
-    deckcraft_model::MasterId(id.0)
+fn master_id_from(id: craft_pptx::MasterId) -> visionslide_model::MasterId {
+    visionslide_model::MasterId(id.0)
 }
 
 // ---------------------------------------------------------------------------
@@ -1626,67 +1626,67 @@ fn animation_from(a: cp_anim::Animation) -> dm_anim::Animation {
 // Shapes, Slides, Masters, Presentation
 // ---------------------------------------------------------------------------
 
-fn ph_type_to(p: deckcraft_model::PhType) -> craft_pptx::PhType {
+fn ph_type_to(p: visionslide_model::PhType) -> craft_pptx::PhType {
     match p {
-        deckcraft_model::PhType::Title => craft_pptx::PhType::Title,
-        deckcraft_model::PhType::CtrTitle => craft_pptx::PhType::CtrTitle,
-        deckcraft_model::PhType::SubTitle => craft_pptx::PhType::SubTitle,
-        deckcraft_model::PhType::Body => craft_pptx::PhType::Body,
-        deckcraft_model::PhType::Obj => craft_pptx::PhType::Obj,
-        deckcraft_model::PhType::Chart => craft_pptx::PhType::Chart,
-        deckcraft_model::PhType::Table => craft_pptx::PhType::Table,
-        deckcraft_model::PhType::ClipArt => craft_pptx::PhType::ClipArt,
-        deckcraft_model::PhType::Diagram => craft_pptx::PhType::Diagram,
-        deckcraft_model::PhType::Media => craft_pptx::PhType::Media,
-        deckcraft_model::PhType::Picture => craft_pptx::PhType::Picture,
-        deckcraft_model::PhType::Date => craft_pptx::PhType::Date,
-        deckcraft_model::PhType::Footer => craft_pptx::PhType::Footer,
-        deckcraft_model::PhType::SlideNum => craft_pptx::PhType::SlideNum,
-        deckcraft_model::PhType::Header => craft_pptx::PhType::Header,
-        deckcraft_model::PhType::SlideImage => craft_pptx::PhType::SlideImage,
+        visionslide_model::PhType::Title => craft_pptx::PhType::Title,
+        visionslide_model::PhType::CtrTitle => craft_pptx::PhType::CtrTitle,
+        visionslide_model::PhType::SubTitle => craft_pptx::PhType::SubTitle,
+        visionslide_model::PhType::Body => craft_pptx::PhType::Body,
+        visionslide_model::PhType::Obj => craft_pptx::PhType::Obj,
+        visionslide_model::PhType::Chart => craft_pptx::PhType::Chart,
+        visionslide_model::PhType::Table => craft_pptx::PhType::Table,
+        visionslide_model::PhType::ClipArt => craft_pptx::PhType::ClipArt,
+        visionslide_model::PhType::Diagram => craft_pptx::PhType::Diagram,
+        visionslide_model::PhType::Media => craft_pptx::PhType::Media,
+        visionslide_model::PhType::Picture => craft_pptx::PhType::Picture,
+        visionslide_model::PhType::Date => craft_pptx::PhType::Date,
+        visionslide_model::PhType::Footer => craft_pptx::PhType::Footer,
+        visionslide_model::PhType::SlideNum => craft_pptx::PhType::SlideNum,
+        visionslide_model::PhType::Header => craft_pptx::PhType::Header,
+        visionslide_model::PhType::SlideImage => craft_pptx::PhType::SlideImage,
     }
 }
 
-fn ph_type_from(p: craft_pptx::PhType) -> deckcraft_model::PhType {
+fn ph_type_from(p: craft_pptx::PhType) -> visionslide_model::PhType {
     match p {
-        craft_pptx::PhType::Title => deckcraft_model::PhType::Title,
-        craft_pptx::PhType::CtrTitle => deckcraft_model::PhType::CtrTitle,
-        craft_pptx::PhType::SubTitle => deckcraft_model::PhType::SubTitle,
-        craft_pptx::PhType::Body => deckcraft_model::PhType::Body,
-        craft_pptx::PhType::Obj => deckcraft_model::PhType::Obj,
-        craft_pptx::PhType::Chart => deckcraft_model::PhType::Chart,
-        craft_pptx::PhType::Table => deckcraft_model::PhType::Table,
-        craft_pptx::PhType::ClipArt => deckcraft_model::PhType::ClipArt,
-        craft_pptx::PhType::Diagram => deckcraft_model::PhType::Diagram,
-        craft_pptx::PhType::Media => deckcraft_model::PhType::Media,
-        craft_pptx::PhType::Picture => deckcraft_model::PhType::Picture,
-        craft_pptx::PhType::Date => deckcraft_model::PhType::Date,
-        craft_pptx::PhType::Footer => deckcraft_model::PhType::Footer,
-        craft_pptx::PhType::SlideNum => deckcraft_model::PhType::SlideNum,
-        craft_pptx::PhType::Header => deckcraft_model::PhType::Header,
-        craft_pptx::PhType::SlideImage => deckcraft_model::PhType::SlideImage,
+        craft_pptx::PhType::Title => visionslide_model::PhType::Title,
+        craft_pptx::PhType::CtrTitle => visionslide_model::PhType::CtrTitle,
+        craft_pptx::PhType::SubTitle => visionslide_model::PhType::SubTitle,
+        craft_pptx::PhType::Body => visionslide_model::PhType::Body,
+        craft_pptx::PhType::Obj => visionslide_model::PhType::Obj,
+        craft_pptx::PhType::Chart => visionslide_model::PhType::Chart,
+        craft_pptx::PhType::Table => visionslide_model::PhType::Table,
+        craft_pptx::PhType::ClipArt => visionslide_model::PhType::ClipArt,
+        craft_pptx::PhType::Diagram => visionslide_model::PhType::Diagram,
+        craft_pptx::PhType::Media => visionslide_model::PhType::Media,
+        craft_pptx::PhType::Picture => visionslide_model::PhType::Picture,
+        craft_pptx::PhType::Date => visionslide_model::PhType::Date,
+        craft_pptx::PhType::Footer => visionslide_model::PhType::Footer,
+        craft_pptx::PhType::SlideNum => visionslide_model::PhType::SlideNum,
+        craft_pptx::PhType::Header => visionslide_model::PhType::Header,
+        craft_pptx::PhType::SlideImage => visionslide_model::PhType::SlideImage,
     }
 }
 
-fn geom_to(g: &deckcraft_model::Geom) -> craft_pptx::Geom {
+fn geom_to(g: &visionslide_model::Geom) -> craft_pptx::Geom {
     match g {
-        deckcraft_model::Geom::Preset { name, adj } => craft_pptx::Geom::Preset { name: name.clone(), adj: adj.clone() },
-        deckcraft_model::Geom::Custom { paths } => craft_pptx::Geom::Custom {
+        visionslide_model::Geom::Preset { name, adj } => craft_pptx::Geom::Preset { name: name.clone(), adj: adj.clone() },
+        visionslide_model::Geom::Custom { paths } => craft_pptx::Geom::Custom {
             paths: paths.iter().map(|p| craft_pptx::CustomPath { w: p.w, h: p.h, d: p.d.clone(), fill: p.fill, stroke: p.stroke }).collect(),
         },
     }
 }
 
-fn geom_from(g: craft_pptx::Geom) -> deckcraft_model::Geom {
+fn geom_from(g: craft_pptx::Geom) -> visionslide_model::Geom {
     match g {
-        craft_pptx::Geom::Preset { name, adj } => deckcraft_model::Geom::Preset { name, adj },
-        craft_pptx::Geom::Custom { paths } => deckcraft_model::Geom::Custom {
-            paths: paths.into_iter().map(|p| deckcraft_model::CustomPath { w: p.w, h: p.h, d: p.d, fill: p.fill, stroke: p.stroke }).collect(),
+        craft_pptx::Geom::Preset { name, adj } => visionslide_model::Geom::Preset { name, adj },
+        craft_pptx::Geom::Custom { paths } => visionslide_model::Geom::Custom {
+            paths: paths.into_iter().map(|p| visionslide_model::CustomPath { w: p.w, h: p.h, d: p.d, fill: p.fill, stroke: p.stroke }).collect(),
         },
     }
 }
 
-fn diagram_to(d: &deckcraft_model::Diagram) -> cd_dgm::Diagram {
+fn diagram_to(d: &visionslide_model::Diagram) -> cd_dgm::Diagram {
     cd_dgm::Diagram {
         kind: d.kind.clone(),
         nodes: d
@@ -1710,13 +1710,13 @@ fn diagram_to(d: &deckcraft_model::Diagram) -> cd_dgm::Diagram {
     }
 }
 
-fn diagram_from(d: cd_dgm::Diagram) -> deckcraft_model::Diagram {
-    deckcraft_model::Diagram {
+fn diagram_from(d: cd_dgm::Diagram) -> visionslide_model::Diagram {
+    visionslide_model::Diagram {
         kind: d.kind,
         nodes: d
             .nodes
             .into_iter()
-            .map(|n| deckcraft_model::DiagramNode {
+            .map(|n| visionslide_model::DiagramNode {
                 text: n.text,
                 level: n.level,
                 picture: n.picture.map(media_id_from),
@@ -1734,7 +1734,7 @@ fn diagram_from(d: cd_dgm::Diagram) -> deckcraft_model::Diagram {
     }
 }
 
-fn media_clip_to(m: &deckcraft_model::MediaClip) -> craft_pptx::MediaClip {
+fn media_clip_to(m: &visionslide_model::MediaClip) -> craft_pptx::MediaClip {
     craft_pptx::MediaClip {
         media: media_id_to(m.media),
         video: m.video,
@@ -1758,8 +1758,8 @@ fn media_clip_to(m: &deckcraft_model::MediaClip) -> craft_pptx::MediaClip {
     }
 }
 
-fn media_clip_from(m: craft_pptx::MediaClip) -> deckcraft_model::MediaClip {
-    deckcraft_model::MediaClip {
+fn media_clip_from(m: craft_pptx::MediaClip) -> visionslide_model::MediaClip {
+    visionslide_model::MediaClip {
         media: media_id_from(m.media),
         video: m.video,
         poster: m.poster.map(media_id_from),
@@ -1782,30 +1782,30 @@ fn media_clip_from(m: craft_pptx::MediaClip) -> deckcraft_model::MediaClip {
     }
 }
 
-fn shape_kind_to(k: &deckcraft_model::ShapeKind) -> craft_pptx::ShapeKind {
+fn shape_kind_to(k: &visionslide_model::ShapeKind) -> craft_pptx::ShapeKind {
     match k {
-        deckcraft_model::ShapeKind::Shape => craft_pptx::ShapeKind::Shape,
-        deckcraft_model::ShapeKind::Picture { fill } => craft_pptx::ShapeKind::Picture { fill: picture_fill_to(fill) },
-        deckcraft_model::ShapeKind::Group { children, child } => {
+        visionslide_model::ShapeKind::Shape => craft_pptx::ShapeKind::Shape,
+        visionslide_model::ShapeKind::Picture { fill } => craft_pptx::ShapeKind::Picture { fill: picture_fill_to(fill) },
+        visionslide_model::ShapeKind::Group { children, child } => {
             craft_pptx::ShapeKind::Group { children: children.iter().map(shape_to).collect(), child: *child }
         }
-        deckcraft_model::ShapeKind::Connector { start, end } => craft_pptx::ShapeKind::Connector {
+        visionslide_model::ShapeKind::Connector { start, end } => craft_pptx::ShapeKind::Connector {
             start: start.map(|(id, idx)| (shape_id_to(id), idx)),
             end: end.map(|(id, idx)| (shape_id_to(id), idx)),
         },
-        deckcraft_model::ShapeKind::Table(t) => craft_pptx::ShapeKind::Table(table_to(t)),
-        deckcraft_model::ShapeKind::Chart(c) => craft_pptx::ShapeKind::Chart(Box::new(chart_to(c))),
-        deckcraft_model::ShapeKind::Media(m) => craft_pptx::ShapeKind::Media(media_clip_to(m)),
-        deckcraft_model::ShapeKind::Ink { strokes } => craft_pptx::ShapeKind::Ink {
+        visionslide_model::ShapeKind::Table(t) => craft_pptx::ShapeKind::Table(table_to(t)),
+        visionslide_model::ShapeKind::Chart(c) => craft_pptx::ShapeKind::Chart(Box::new(chart_to(c))),
+        visionslide_model::ShapeKind::Media(m) => craft_pptx::ShapeKind::Media(media_clip_to(m)),
+        visionslide_model::ShapeKind::Ink { strokes } => craft_pptx::ShapeKind::Ink {
             strokes: strokes
                 .iter()
                 .map(|s| craft_pptx::InkStroke { points: s.points.clone(), color: s.color, width: s.width, highlighter: s.highlighter })
                 .collect(),
         },
-        deckcraft_model::ShapeKind::Model3d { media, poster } => {
+        visionslide_model::ShapeKind::Model3d { media, poster } => {
             craft_pptx::ShapeKind::Model3d { media: media_id_to(*media), poster: poster.map(media_id_to) }
         }
-        deckcraft_model::ShapeKind::Opaque { xml, preview, label, parts } => craft_pptx::ShapeKind::Opaque {
+        visionslide_model::ShapeKind::Opaque { xml, preview, label, parts } => craft_pptx::ShapeKind::Opaque {
             xml: xml.clone(),
             preview: preview.map(media_id_to),
             label: label.clone(),
@@ -1814,30 +1814,30 @@ fn shape_kind_to(k: &deckcraft_model::ShapeKind) -> craft_pptx::ShapeKind {
     }
 }
 
-fn shape_kind_from(k: craft_pptx::ShapeKind) -> deckcraft_model::ShapeKind {
+fn shape_kind_from(k: craft_pptx::ShapeKind) -> visionslide_model::ShapeKind {
     match k {
-        craft_pptx::ShapeKind::Shape => deckcraft_model::ShapeKind::Shape,
-        craft_pptx::ShapeKind::Picture { fill } => deckcraft_model::ShapeKind::Picture { fill: picture_fill_from(fill) },
+        craft_pptx::ShapeKind::Shape => visionslide_model::ShapeKind::Shape,
+        craft_pptx::ShapeKind::Picture { fill } => visionslide_model::ShapeKind::Picture { fill: picture_fill_from(fill) },
         craft_pptx::ShapeKind::Group { children, child } => {
-            deckcraft_model::ShapeKind::Group { children: children.into_iter().map(shape_from).collect(), child }
+            visionslide_model::ShapeKind::Group { children: children.into_iter().map(shape_from).collect(), child }
         }
-        craft_pptx::ShapeKind::Connector { start, end } => deckcraft_model::ShapeKind::Connector {
+        craft_pptx::ShapeKind::Connector { start, end } => visionslide_model::ShapeKind::Connector {
             start: start.map(|(id, idx)| (shape_id_from(id), idx)),
             end: end.map(|(id, idx)| (shape_id_from(id), idx)),
         },
-        craft_pptx::ShapeKind::Table(t) => deckcraft_model::ShapeKind::Table(table_from(t)),
-        craft_pptx::ShapeKind::Chart(c) => deckcraft_model::ShapeKind::Chart(Box::new(chart_from(*c))),
-        craft_pptx::ShapeKind::Media(m) => deckcraft_model::ShapeKind::Media(media_clip_from(m)),
-        craft_pptx::ShapeKind::Ink { strokes } => deckcraft_model::ShapeKind::Ink {
+        craft_pptx::ShapeKind::Table(t) => visionslide_model::ShapeKind::Table(table_from(t)),
+        craft_pptx::ShapeKind::Chart(c) => visionslide_model::ShapeKind::Chart(Box::new(chart_from(*c))),
+        craft_pptx::ShapeKind::Media(m) => visionslide_model::ShapeKind::Media(media_clip_from(m)),
+        craft_pptx::ShapeKind::Ink { strokes } => visionslide_model::ShapeKind::Ink {
             strokes: strokes
                 .into_iter()
-                .map(|s| deckcraft_model::InkStroke { points: s.points, color: s.color, width: s.width, highlighter: s.highlighter })
+                .map(|s| visionslide_model::InkStroke { points: s.points, color: s.color, width: s.width, highlighter: s.highlighter })
                 .collect(),
         },
         craft_pptx::ShapeKind::Model3d { media, poster } => {
-            deckcraft_model::ShapeKind::Model3d { media: media_id_from(media), poster: poster.map(media_id_from) }
+            visionslide_model::ShapeKind::Model3d { media: media_id_from(media), poster: poster.map(media_id_from) }
         }
-        craft_pptx::ShapeKind::Opaque { xml, preview, label, parts } => deckcraft_model::ShapeKind::Opaque {
+        craft_pptx::ShapeKind::Opaque { xml, preview, label, parts } => visionslide_model::ShapeKind::Opaque {
             xml,
             preview: preview.map(media_id_from),
             label,
@@ -1846,7 +1846,7 @@ fn shape_kind_from(k: craft_pptx::ShapeKind) -> deckcraft_model::ShapeKind {
     }
 }
 
-fn shape_to(s: &deckcraft_model::Shape) -> craft_pptx::Shape {
+fn shape_to(s: &visionslide_model::Shape) -> craft_pptx::Shape {
     craft_pptx::Shape {
         id: shape_id_to(s.id),
         name: s.name.clone(),
@@ -1879,14 +1879,14 @@ fn shape_to(s: &deckcraft_model::Shape) -> craft_pptx::Shape {
     }
 }
 
-fn shape_from(s: craft_pptx::Shape) -> deckcraft_model::Shape {
-    deckcraft_model::Shape {
+fn shape_from(s: craft_pptx::Shape) -> visionslide_model::Shape {
+    visionslide_model::Shape {
         id: shape_id_from(s.id),
         name: s.name,
         xfrm: s.xfrm,
         kind: shape_kind_from(s.kind),
         geom: geom_from(s.geom),
-        ph: s.ph.map(|p| deckcraft_model::Placeholder {
+        ph: s.ph.map(|p| visionslide_model::Placeholder {
             kind: ph_type_from(p.kind),
             idx: p.idx,
             vertical: p.vertical,
@@ -1912,21 +1912,21 @@ fn shape_from(s: craft_pptx::Shape) -> deckcraft_model::Shape {
     }
 }
 
-fn background_to(b: &deckcraft_model::Background) -> craft_pptx::Background {
+fn background_to(b: &visionslide_model::Background) -> craft_pptx::Background {
     match b {
-        deckcraft_model::Background::Fill { fill } => craft_pptx::Background::Fill { fill: fill_to(fill) },
-        deckcraft_model::Background::Ref { idx, color } => craft_pptx::Background::Ref { idx: *idx, color: color_ref_to(color) },
+        visionslide_model::Background::Fill { fill } => craft_pptx::Background::Fill { fill: fill_to(fill) },
+        visionslide_model::Background::Ref { idx, color } => craft_pptx::Background::Ref { idx: *idx, color: color_ref_to(color) },
     }
 }
 
-fn background_from(b: craft_pptx::Background) -> deckcraft_model::Background {
+fn background_from(b: craft_pptx::Background) -> visionslide_model::Background {
     match b {
-        craft_pptx::Background::Fill { fill } => deckcraft_model::Background::Fill { fill: fill_from(fill) },
-        craft_pptx::Background::Ref { idx, color } => deckcraft_model::Background::Ref { idx, color: color_ref_from(color) },
+        craft_pptx::Background::Fill { fill } => visionslide_model::Background::Fill { fill: fill_from(fill) },
+        craft_pptx::Background::Ref { idx, color } => visionslide_model::Background::Ref { idx, color: color_ref_from(color) },
     }
 }
 
-fn comment_to(c: &deckcraft_model::Comment) -> craft_pptx::Comment {
+fn comment_to(c: &visionslide_model::Comment) -> craft_pptx::Comment {
     craft_pptx::Comment {
         author: c.author.clone(),
         initials: c.initials.clone(),
@@ -1940,8 +1940,8 @@ fn comment_to(c: &deckcraft_model::Comment) -> craft_pptx::Comment {
     }
 }
 
-fn comment_from(c: craft_pptx::Comment) -> deckcraft_model::Comment {
-    deckcraft_model::Comment {
+fn comment_from(c: craft_pptx::Comment) -> visionslide_model::Comment {
+    visionslide_model::Comment {
         author: c.author,
         initials: c.initials,
         text: c.text,
@@ -1954,7 +1954,7 @@ fn comment_from(c: craft_pptx::Comment) -> deckcraft_model::Comment {
     }
 }
 
-fn slide_to(s: &deckcraft_model::Slide) -> craft_pptx::Slide {
+fn slide_to(s: &visionslide_model::Slide) -> craft_pptx::Slide {
     craft_pptx::Slide {
         id: slide_id_to(s.id),
         layout: layout_id_to(s.layout),
@@ -1974,8 +1974,8 @@ fn slide_to(s: &deckcraft_model::Slide) -> craft_pptx::Slide {
     }
 }
 
-fn slide_from(s: craft_pptx::Slide) -> deckcraft_model::Slide {
-    deckcraft_model::Slide {
+fn slide_from(s: craft_pptx::Slide) -> visionslide_model::Slide {
+    visionslide_model::Slide {
         id: slide_id_from(s.id),
         layout: layout_id_from(s.layout),
         name: s.name,
@@ -1994,41 +1994,41 @@ fn slide_from(s: craft_pptx::Slide) -> deckcraft_model::Slide {
     }
 }
 
-fn layout_type_to(k: deckcraft_model::LayoutType) -> craft_pptx::LayoutType {
+fn layout_type_to(k: visionslide_model::LayoutType) -> craft_pptx::LayoutType {
     match k {
-        deckcraft_model::LayoutType::Title => craft_pptx::LayoutType::Title,
-        deckcraft_model::LayoutType::TitleAndContent => craft_pptx::LayoutType::TitleAndContent,
-        deckcraft_model::LayoutType::SectionHeader => craft_pptx::LayoutType::SectionHeader,
-        deckcraft_model::LayoutType::TwoContent => craft_pptx::LayoutType::TwoContent,
-        deckcraft_model::LayoutType::Comparison => craft_pptx::LayoutType::Comparison,
-        deckcraft_model::LayoutType::TitleOnly => craft_pptx::LayoutType::TitleOnly,
-        deckcraft_model::LayoutType::Blank => craft_pptx::LayoutType::Blank,
-        deckcraft_model::LayoutType::ContentWithCaption => craft_pptx::LayoutType::ContentWithCaption,
-        deckcraft_model::LayoutType::PictureWithCaption => craft_pptx::LayoutType::PictureWithCaption,
-        deckcraft_model::LayoutType::TitleAndVerticalText => craft_pptx::LayoutType::TitleAndVerticalText,
-        deckcraft_model::LayoutType::VerticalTitleAndText => craft_pptx::LayoutType::VerticalTitleAndText,
-        deckcraft_model::LayoutType::Custom => craft_pptx::LayoutType::Custom,
+        visionslide_model::LayoutType::Title => craft_pptx::LayoutType::Title,
+        visionslide_model::LayoutType::TitleAndContent => craft_pptx::LayoutType::TitleAndContent,
+        visionslide_model::LayoutType::SectionHeader => craft_pptx::LayoutType::SectionHeader,
+        visionslide_model::LayoutType::TwoContent => craft_pptx::LayoutType::TwoContent,
+        visionslide_model::LayoutType::Comparison => craft_pptx::LayoutType::Comparison,
+        visionslide_model::LayoutType::TitleOnly => craft_pptx::LayoutType::TitleOnly,
+        visionslide_model::LayoutType::Blank => craft_pptx::LayoutType::Blank,
+        visionslide_model::LayoutType::ContentWithCaption => craft_pptx::LayoutType::ContentWithCaption,
+        visionslide_model::LayoutType::PictureWithCaption => craft_pptx::LayoutType::PictureWithCaption,
+        visionslide_model::LayoutType::TitleAndVerticalText => craft_pptx::LayoutType::TitleAndVerticalText,
+        visionslide_model::LayoutType::VerticalTitleAndText => craft_pptx::LayoutType::VerticalTitleAndText,
+        visionslide_model::LayoutType::Custom => craft_pptx::LayoutType::Custom,
     }
 }
 
-fn layout_type_from(k: craft_pptx::LayoutType) -> deckcraft_model::LayoutType {
+fn layout_type_from(k: craft_pptx::LayoutType) -> visionslide_model::LayoutType {
     match k {
-        craft_pptx::LayoutType::Title => deckcraft_model::LayoutType::Title,
-        craft_pptx::LayoutType::TitleAndContent => deckcraft_model::LayoutType::TitleAndContent,
-        craft_pptx::LayoutType::SectionHeader => deckcraft_model::LayoutType::SectionHeader,
-        craft_pptx::LayoutType::TwoContent => deckcraft_model::LayoutType::TwoContent,
-        craft_pptx::LayoutType::Comparison => deckcraft_model::LayoutType::Comparison,
-        craft_pptx::LayoutType::TitleOnly => deckcraft_model::LayoutType::TitleOnly,
-        craft_pptx::LayoutType::Blank => deckcraft_model::LayoutType::Blank,
-        craft_pptx::LayoutType::ContentWithCaption => deckcraft_model::LayoutType::ContentWithCaption,
-        craft_pptx::LayoutType::PictureWithCaption => deckcraft_model::LayoutType::PictureWithCaption,
-        craft_pptx::LayoutType::TitleAndVerticalText => deckcraft_model::LayoutType::TitleAndVerticalText,
-        craft_pptx::LayoutType::VerticalTitleAndText => deckcraft_model::LayoutType::VerticalTitleAndText,
-        craft_pptx::LayoutType::Custom => deckcraft_model::LayoutType::Custom,
+        craft_pptx::LayoutType::Title => visionslide_model::LayoutType::Title,
+        craft_pptx::LayoutType::TitleAndContent => visionslide_model::LayoutType::TitleAndContent,
+        craft_pptx::LayoutType::SectionHeader => visionslide_model::LayoutType::SectionHeader,
+        craft_pptx::LayoutType::TwoContent => visionslide_model::LayoutType::TwoContent,
+        craft_pptx::LayoutType::Comparison => visionslide_model::LayoutType::Comparison,
+        craft_pptx::LayoutType::TitleOnly => visionslide_model::LayoutType::TitleOnly,
+        craft_pptx::LayoutType::Blank => visionslide_model::LayoutType::Blank,
+        craft_pptx::LayoutType::ContentWithCaption => visionslide_model::LayoutType::ContentWithCaption,
+        craft_pptx::LayoutType::PictureWithCaption => visionslide_model::LayoutType::PictureWithCaption,
+        craft_pptx::LayoutType::TitleAndVerticalText => visionslide_model::LayoutType::TitleAndVerticalText,
+        craft_pptx::LayoutType::VerticalTitleAndText => visionslide_model::LayoutType::VerticalTitleAndText,
+        craft_pptx::LayoutType::Custom => visionslide_model::LayoutType::Custom,
     }
 }
 
-fn layout_to(l: &deckcraft_model::Layout) -> craft_pptx::Layout {
+fn layout_to(l: &visionslide_model::Layout) -> craft_pptx::Layout {
     craft_pptx::Layout {
         id: layout_id_to(l.id),
         name: l.name.clone(),
@@ -2042,8 +2042,8 @@ fn layout_to(l: &deckcraft_model::Layout) -> craft_pptx::Layout {
     }
 }
 
-fn layout_from(l: craft_pptx::Layout) -> deckcraft_model::Layout {
-    deckcraft_model::Layout {
+fn layout_from(l: craft_pptx::Layout) -> visionslide_model::Layout {
+    visionslide_model::Layout {
         id: layout_id_from(l.id),
         name: l.name,
         kind: layout_type_from(l.kind),
@@ -2056,7 +2056,7 @@ fn layout_from(l: craft_pptx::Layout) -> deckcraft_model::Layout {
     }
 }
 
-pub(crate) fn master_to_craft(m: &deckcraft_model::Master) -> craft_pptx::Master {
+pub(crate) fn master_to_craft(m: &visionslide_model::Master) -> craft_pptx::Master {
     craft_pptx::Master {
         id: master_id_to(m.id),
         name: m.name.clone(),
@@ -2073,8 +2073,8 @@ pub(crate) fn master_to_craft(m: &deckcraft_model::Master) -> craft_pptx::Master
     }
 }
 
-fn master_from(m: craft_pptx::Master) -> deckcraft_model::Master {
-    deckcraft_model::Master {
+fn master_from(m: craft_pptx::Master) -> visionslide_model::Master {
+    visionslide_model::Master {
         id: master_id_from(m.id),
         name: m.name,
         theme: theme_from_craft(m.theme),
@@ -2090,11 +2090,11 @@ fn master_from(m: craft_pptx::Master) -> deckcraft_model::Master {
     }
 }
 
-pub(crate) fn media_item_from_craft(m: craft_pptx::MediaItem) -> deckcraft_model::MediaItem {
-    deckcraft_model::MediaItem { id: media_id_from(m.id), name: m.name, content_type: m.content_type, data: m.data, link: m.link }
+pub(crate) fn media_item_from_craft(m: craft_pptx::MediaItem) -> visionslide_model::MediaItem {
+    visionslide_model::MediaItem { id: media_id_from(m.id), name: m.name, content_type: m.content_type, data: m.data, link: m.link }
 }
 
-fn media_item_to(m: &deckcraft_model::MediaItem) -> craft_pptx::MediaItem {
+fn media_item_to(m: &visionslide_model::MediaItem) -> craft_pptx::MediaItem {
     craft_pptx::MediaItem {
         id: media_id_to(m.id),
         name: m.name.clone(),
@@ -2104,7 +2104,7 @@ fn media_item_to(m: &deckcraft_model::MediaItem) -> craft_pptx::MediaItem {
     }
 }
 
-pub(crate) fn pres_to_craft(p: &deckcraft_model::Presentation) -> craft_pptx::Presentation {
+pub(crate) fn pres_to_craft(p: &visionslide_model::Presentation) -> craft_pptx::Presentation {
     craft_pptx::Presentation {
         slide_size: p.slide_size,
         notes_size: p.notes_size,
@@ -2209,10 +2209,10 @@ const DATE_KINDS: [&str; 13] = [
     "datetime13",
 ];
 
-fn infer_date_format(slides: &[Arc<deckcraft_model::Slide>]) -> String {
+fn infer_date_format(slides: &[Arc<visionslide_model::Slide>]) -> String {
     for s in slides {
         for sh in &s.shapes {
-            if sh.ph_type() != Some(deckcraft_model::PhType::Date) {
+            if sh.ph_type() != Some(visionslide_model::PhType::Date) {
                 continue;
             }
             if let Some(kind) = sh.text.iter().flat_map(|t| t.paragraphs.iter()).flat_map(|p| p.runs.iter()).find_map(|r| match &r.kind {
@@ -2226,9 +2226,9 @@ fn infer_date_format(slides: &[Arc<deckcraft_model::Slide>]) -> String {
     String::new()
 }
 
-pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> deckcraft_model::Presentation {
-    let slides: Vec<Arc<deckcraft_model::Slide>> = p.slides.into_iter().map(|s| Arc::new(slide_from((*s).clone()))).collect();
-    let mut header_footer = deckcraft_model::HeaderFooter {
+pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> visionslide_model::Presentation {
+    let slides: Vec<Arc<visionslide_model::Slide>> = p.slides.into_iter().map(|s| Arc::new(slide_from((*s).clone()))).collect();
+    let mut header_footer = visionslide_model::HeaderFooter {
         date: p.header_footer.date,
         slide_number: p.header_footer.slide_number,
         footer: p.header_footer.footer,
@@ -2241,7 +2241,7 @@ pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> deckcraft_model::P
     if header_footer.date && header_footer.date_format.is_empty() && header_footer.date_text.is_empty() {
         header_footer.date_format = infer_date_format(&slides);
     }
-    deckcraft_model::Presentation {
+    visionslide_model::Presentation {
         slide_size: p.slide_size,
         notes_size: p.notes_size,
         slides,
@@ -2251,14 +2251,14 @@ pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> deckcraft_model::P
         sections: p
             .sections
             .into_iter()
-            .map(|s| deckcraft_model::Section { name: s.name, slides: s.slides.into_iter().map(slide_id_from).collect() })
+            .map(|s| visionslide_model::Section { name: s.name, slides: s.slides.into_iter().map(slide_id_from).collect() })
             .collect(),
         custom_shows: p
             .custom_shows
             .into_iter()
-            .map(|c| deckcraft_model::CustomShow { name: c.name, slides: c.slides.into_iter().map(slide_id_from).collect() })
+            .map(|c| visionslide_model::CustomShow { name: c.name, slides: c.slides.into_iter().map(slide_id_from).collect() })
             .collect(),
-        show: deckcraft_model::ShowSettings {
+        show: visionslide_model::ShowSettings {
             show_type: p.show.show_type,
             loop_until_esc: p.show.loop_until_esc,
             without_narration: p.show.without_narration,
@@ -2271,7 +2271,7 @@ pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> deckcraft_model::P
             show_media_controls: p.show.show_media_controls,
         },
         header_footer,
-        props: deckcraft_model::Properties {
+        props: visionslide_model::Properties {
             title: p.props.title,
             subject: p.props.subject,
             author: p.props.author,
@@ -2291,7 +2291,7 @@ pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> deckcraft_model::P
         embedded_fonts: p
             .embedded_fonts
             .into_iter()
-            .map(|f| deckcraft_model::EmbeddedFont {
+            .map(|f| visionslide_model::EmbeddedFont {
                 typeface: f.typeface,
                 panose: f.panose,
                 pitch_family: f.pitch_family,
@@ -2307,7 +2307,7 @@ pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> deckcraft_model::P
         kept_parts: p
             .kept_parts
             .into_iter()
-            .map(|k| deckcraft_model::KeptPart {
+            .map(|k| visionslide_model::KeptPart {
                 name: k.name,
                 content_type: k.content_type,
                 xml: k.xml,
@@ -2315,7 +2315,7 @@ pub(crate) fn pres_from_craft(p: craft_pptx::Presentation) -> deckcraft_model::P
                 from_root: k.from_root,
             })
             .collect(),
-        guides: p.guides.into_iter().map(|g| deckcraft_model::DrawGuide { vertical: g.vertical, pos: g.pos }).collect(),
+        guides: p.guides.into_iter().map(|g| visionslide_model::DrawGuide { vertical: g.vertical, pos: g.pos }).collect(),
         raw_ext: p.raw_ext,
     }
 }

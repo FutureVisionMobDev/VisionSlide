@@ -5,9 +5,9 @@
 
 use std::collections::HashSet;
 
-use deckcraft_model::Shape;
 use egui::{Align2, CornerRadius, Id, Rect, Role, Sense, Stroke, Ui, WidgetInfo, pos2, vec2};
 use serde_json::json;
+use visionslide_model::Shape;
 
 use crate::SlideApp;
 use crate::icons::{self, Icon};

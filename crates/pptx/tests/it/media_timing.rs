@@ -3,8 +3,8 @@
 use std::io::{Cursor, Read, Write};
 use std::sync::Arc;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::{MediaClip, ShapeId, ShapeKind, defaults};
+use visionslide_geom::Xfrm;
+use visionslide_model::{MediaClip, ShapeId, ShapeKind, defaults};
 
 fn node(tag: &str, attrs: &str, spid: u32, media: &str, ctn: &str) -> String {
     format!(
@@ -20,7 +20,7 @@ fn clips(nodes: impl Fn(u32, u32) -> String) -> Vec<MediaClip> {
     for (media, is_video) in [(video, true), (audio, false)] {
         let id = ShapeId(p.alloc_id().expect("id"));
         ids.push(id.0);
-        let s = deckcraft_model::Shape {
+        let s = visionslide_model::Shape {
             id,
             name: "Clip".into(),
             xfrm: Some(Xfrm::new(40.0, 40.0, 200.0, 100.0)),
@@ -33,7 +33,7 @@ fn clips(nodes: impl Fn(u32, u32) -> String) -> Vec<MediaClip> {
         r#"<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"><p:childTnLst>{}</p:childTnLst></p:cTn></p:par></p:tnLst></p:timing>"#,
         nodes(ids[0], ids[1])
     );
-    let bytes = deckcraft_pptx::export(&p).expect("export");
+    let bytes = visionslide_pptx::export(&p).expect("export");
     let mut z = zip::ZipArchive::new(Cursor::new(&bytes)).expect("zip");
     let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
     for i in 0..z.len() {
@@ -49,7 +49,7 @@ fn clips(nodes: impl Fn(u32, u32) -> String) -> Vec<MediaClip> {
         out.start_file(f.name(), zip::write::SimpleFileOptions::default()).expect("start");
         out.write_all(&d).expect("write");
     }
-    let q = deckcraft_pptx::import(&out.finish().expect("finish").into_inner()).expect("import");
+    let q = visionslide_pptx::import(&out.finish().expect("finish").into_inner()).expect("import");
     q.slides[0]
         .shapes
         .iter()
@@ -117,7 +117,7 @@ fn media_only_slide_exports_and_round_trips_video_and_audio_timing_nodes() {
     let vid_id = ShapeId(p.alloc_id().expect("id"));
     let aud_id = ShapeId(p.alloc_id().expect("id"));
     let s0 = Arc::make_mut(&mut p.slides[0]);
-    s0.shapes.push(deckcraft_model::Shape {
+    s0.shapes.push(visionslide_model::Shape {
         id: vid_id,
         name: "AutoplayVideo".into(),
         xfrm: Some(Xfrm::new(40.0, 40.0, 200.0, 100.0)),
@@ -135,15 +135,15 @@ fn media_only_slide_exports_and_round_trips_video_and_audio_timing_nodes() {
         }),
         ..Default::default()
     });
-    s0.shapes.push(deckcraft_model::Shape {
+    s0.shapes.push(visionslide_model::Shape {
         id: aud_id,
         name: "ManualMutedAudio".into(),
         xfrm: Some(Xfrm::new(40.0, 160.0, 200.0, 100.0)),
         kind: ShapeKind::Media(MediaClip { media: audio, video: false, autoplay: false, volume: 0.0, loop_play: true, ..Default::default() }),
         ..Default::default()
     });
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    let back = deckcraft_pptx::import(&bytes).expect("import");
+    let bytes = visionslide_pptx::export(&p).expect("export");
+    let back = visionslide_pptx::import(&bytes).expect("import");
     let clips: Vec<&MediaClip> = back.slides[0]
         .shapes
         .iter()

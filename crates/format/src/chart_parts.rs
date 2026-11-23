@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use craft_deckcraft_format::{MAX_ENTRY, Package, chart_part_entry, is_chart_part_entry};
 
-use deckcraft_model::chart::ChartPart;
-use deckcraft_model::{Master, Presentation, Shape, ShapeKind};
+use visionslide_model::chart::ChartPart;
+use visionslide_model::{Master, Presentation, Shape, ShapeKind};
 
 use crate::{FormatError, Result};
 
@@ -50,7 +50,7 @@ pub(super) fn restore(
                 return Ok(());
             }
             if z.declared_size(&entry).is_some_and(|size| size > *left) {
-                return Err(FormatError::Damaged("embedded media and chart parts are larger than DeckCraft can open".into()));
+                return Err(FormatError::Damaged("embedded media and chart parts are larger than VisionSlide can open".into()));
             }
             // A CRC/decode error may already have inflated bytes. Stop on that first error
             // rather than letting later corrupt members reuse the unchanged byte budget.
@@ -62,7 +62,7 @@ pub(super) fn restore(
             // bounded manifest parser has read them, so resaving migrates them losslessly.
             let size = part.bytes.len() as u64;
             if size > (*left).min(MAX_ENTRY) {
-                return Err(FormatError::Damaged("inline chart part is larger than DeckCraft can open".into()));
+                return Err(FormatError::Damaged("inline chart part is larger than VisionSlide can open".into()));
             }
             *left -= size;
         }

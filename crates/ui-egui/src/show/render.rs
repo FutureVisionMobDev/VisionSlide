@@ -8,13 +8,13 @@ pub(super) fn render_threads() -> u16 {
     if cfg!(target_arch = "wasm32") { 0 } else { std::thread::available_parallelism().map(|n| n.get().min(8) as u16).unwrap_or(0) }
 }
 
-pub(super) fn render_backdrop(doc: &Presentation, key: BackKey, threads: u16) -> deckcraft_render::Image {
+pub(super) fn render_backdrop(doc: &Presentation, key: BackKey, threads: u16) -> visionslide_render::Image {
     let opts = RenderOpts { scale: key.size.0 as f64 / doc.slide_size.width.max(1.0), size: Some(key.size), threads, ..Default::default() };
-    deckcraft_render::render_slide_part(doc, key.slide, deckcraft_render::SlidePart::Backdrop, &opts)
+    visionslide_render::render_slide_part(doc, key.slide, visionslide_render::SlidePart::Backdrop, &opts)
 }
 
 /// `top` laid over `back` (both premultiplied RGBA of the same size; `top` alone otherwise).
-fn over(back: &deckcraft_render::Image, top: &deckcraft_render::Image) -> egui::ColorImage {
+fn over(back: &visionslide_render::Image, top: &visionslide_render::Image) -> egui::ColorImage {
     if back.width != top.width || back.height != top.height || back.pixels.len() != top.pixels.len() {
         return crate::textures::to_color_image(top, false);
     }
@@ -48,7 +48,7 @@ pub(super) fn render_frame(
     threads: u16,
     plays: &[TriggerPlay],
     stamps: &[StepStamp],
-    backdrop: Option<&deckcraft_render::Image>,
+    backdrop: Option<&visionslide_render::Image>,
 ) -> egui::ColorImage {
     let f = move |id: ShapeId| {
         let mut st = state_for(&tl, id, step, t, plays, stamps);
@@ -66,8 +66,8 @@ pub(super) fn render_frame(
         ..Default::default()
     };
     match backdrop {
-        Some(back) => over(back, &deckcraft_render::render_slide_part(doc, idx, deckcraft_render::SlidePart::Content, &opts)),
-        None => crate::textures::to_color_image(&deckcraft_render::render_slide(doc, idx, &opts), false),
+        Some(back) => over(back, &visionslide_render::render_slide_part(doc, idx, visionslide_render::SlidePart::Content, &opts)),
+        None => crate::textures::to_color_image(&visionslide_render::render_slide(doc, idx, &opts), false),
     }
 }
 
@@ -104,7 +104,7 @@ pub(super) fn render_overlay(
         threads,
         ..Default::default()
     };
-    let img = deckcraft_render::render_slide_part(doc, idx, deckcraft_render::SlidePart::Content, &opts);
+    let img = visionslide_render::render_slide_part(doc, idx, visionslide_render::SlidePart::Content, &opts);
     crate::textures::to_color_image(&img, false)
 }
 
@@ -151,7 +151,7 @@ pub(super) fn fit(avail: Rect, doc: &Presentation) -> Rect {
     Rect::from_center_size(avail.center(), vec2(sw * s, sh * s))
 }
 
-/// A transition layer as an egui mesh: [`deckcraft_anim::layer_mesh`]'s triangles (perspective
+/// A transition layer as an egui mesh: [`visionslide_anim::layer_mesh`]'s triangles (perspective
 /// cards subdivided so their pictures stay straight) with per-vertex opacity.
 /// Where presenter view's "Next" preview goes: the column's width below its label, kept inside
 /// the top 60% of the column. A portrait slide used to get the full width and a height many
@@ -166,7 +166,7 @@ pub(super) fn quad_mesh(tex: Option<egui::TextureId>, rect: Rect, l: &Layer, col
         Some(id) => Mesh::with_texture(id),
         None => Mesh::default(),
     };
-    let (verts, tris) = deckcraft_anim::layer_mesh(l);
+    let (verts, tris) = visionslide_anim::layer_mesh(l);
     for v in &verts {
         let a = if v.a.is_finite() { v.a.clamp(0.0, 1.0) } else { 0.0 };
         let col = if tex.is_some() { Color32::from_white_alpha((a * 255.0).round() as u8) } else { color.gamma_multiply(a as f32) };
@@ -181,11 +181,11 @@ pub(super) fn quad_mesh(tex: Option<egui::TextureId>, rect: Rect, l: &Layer, col
 
 /// Render the backgrounds and contents of a transition's two slides into textures, once.
 pub(super) fn part_textures(ctx: &egui::Context, doc: &Presentation, from: Option<usize>, to: usize, size: (u32, u32)) -> [Option<TextureHandle>; 4] {
-    use deckcraft_render::SlidePart;
+    use visionslide_render::SlidePart;
     let threads = if cfg!(target_arch = "wasm32") { 0 } else { std::thread::available_parallelism().map(|n| n.get().min(8) as u16).unwrap_or(0) };
     let opts = RenderOpts { scale: size.0 as f64 / doc.slide_size.width.max(1.0), size: Some(size), threads, ..Default::default() };
     let tex = |i: usize, part: SlidePart, name: &str| {
-        let img = deckcraft_render::render_slide_part(doc, i, part, &opts);
+        let img = visionslide_render::render_slide_part(doc, i, part, &opts);
         crate::textures::upload(ctx, name, crate::textures::to_color_image(&img, false))
     };
     [
@@ -214,7 +214,7 @@ pub(super) fn render_thumb(ctx: &egui::Context, show: &mut Show, doc: &Presentat
     }
     // 320 wide, unless the slide is so tall that this would pass the height limit: fit that box.
     let (scale, w, h) = thumb_size(doc.slide_size.width, doc.slide_size.height);
-    let img = deckcraft_render::render_slide(doc, i, &RenderOpts { scale, size: Some((w as u32, h as u32)), ..Default::default() });
+    let img = visionslide_render::render_slide(doc, i, &RenderOpts { scale, size: Some((w as u32, h as u32)), ..Default::default() });
     let tex = crate::textures::upload(ctx, format!("show-grid-{i}"), crate::textures::to_color_image(&img, false));
     show.thumbs.push((i, tex.clone()));
     Some(tex)

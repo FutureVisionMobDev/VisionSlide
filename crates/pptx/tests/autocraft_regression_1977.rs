@@ -4,9 +4,9 @@
 use std::io::{Cursor, Read, Write};
 use std::sync::Arc;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::chart::{Chart, ChartType};
-use deckcraft_model::{LayoutType, Presentation, Shape, ShapeId, ShapeKind, defaults};
+use visionslide_geom::Xfrm;
+use visionslide_model::chart::{Chart, ChartType};
+use visionslide_model::{LayoutType, Presentation, Shape, ShapeId, ShapeKind, defaults};
 
 fn bar_chart_pptx() -> Vec<u8> {
     let mut p = defaults::new_presentation(None);
@@ -23,7 +23,7 @@ fn bar_chart_pptx() -> Vec<u8> {
     shape.kind = ShapeKind::Chart(Box::new(chart));
     slide.shapes.push(shape);
     p.slides.push(Arc::new(slide));
-    deckcraft_pptx::export(&p).expect("export")
+    visionslide_pptx::export(&p).expect("export")
 }
 
 fn reimport(bytes: &[u8], f: impl Fn(&str) -> String) -> Presentation {
@@ -43,7 +43,7 @@ fn reimport(bytes: &[u8], f: impl Fn(&str) -> String) -> Presentation {
         out.write_all(&data).expect("write");
     }
     let patched = out.finish().expect("finish").into_inner();
-    deckcraft_pptx::import(&patched).expect("import")
+    visionslide_pptx::import(&patched).expect("import")
 }
 
 fn chart_of(p: &Presentation) -> &Chart {

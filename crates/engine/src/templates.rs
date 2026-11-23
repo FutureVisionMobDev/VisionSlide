@@ -5,10 +5,10 @@
 
 use std::sync::Arc;
 
-use deckcraft_geom::Size;
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{Presentation, defaults};
 use serde_json::Value;
+use visionslide_geom::Size;
+use visionslide_model::text::TextBody;
+use visionslide_model::{Presentation, defaults};
 
 use crate::Result;
 use crate::cmd::{bad, slide::find_layout};
@@ -207,7 +207,7 @@ pub fn build(name: &str, size: Size) -> Result<Presentation> {
         let names = starters().iter().map(|t| t.name).collect::<Vec<_>>().join(", ");
         bad("file.new", format!("no template `{name}`; use {names}"))
     })?;
-    let theme = deckcraft_model::theme::builtin_themes()
+    let theme = visionslide_model::theme::builtin_themes()
         .into_iter()
         .find(|t| t.name.eq_ignore_ascii_case(starter.theme))
         .ok_or_else(|| bad("file.new", format!("template `{}` names a missing theme `{}`", starter.name, starter.theme)))?;
@@ -326,8 +326,8 @@ mod tests {
     #[test]
     fn a_starter_round_trips_through_pptx() {
         let doc = build("Evening Talk", defaults::WIDE).unwrap();
-        let bytes = deckcraft_pptx::export(&doc).unwrap();
-        let back = deckcraft_pptx::import(&bytes).unwrap();
+        let bytes = visionslide_pptx::export(&doc).unwrap();
+        let back = visionslide_pptx::import(&bytes).unwrap();
         assert_eq!(back.slides.len(), doc.slides.len());
         for (before, after) in doc.slides.iter().zip(back.slides.iter()) {
             assert_eq!(after.title(), before.title());

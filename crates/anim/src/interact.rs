@@ -12,8 +12,8 @@
 //! - a slide the show returns to by a link or by going back looks as it was left; going forward
 //!   to a slide starts it over (#2090).
 
-use deckcraft_model::text::Action;
-use deckcraft_model::{Presentation, ShapeId};
+use visionslide_model::text::Action;
+use visionslide_model::{Presentation, ShapeId};
 
 use crate::{AnimState, LinkJump, ShowAction, ShowState, StepStamp, Timeline, TriggerPlay};
 

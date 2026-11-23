@@ -1,16 +1,16 @@
 //! The Header & Footer date through PPTX: an automatic date's format comes back on import, so the
 //! dialog opens on the deck's own choice; a fixed date still comes back as its text.
 
-use deckcraft_model::{Presentation, defaults};
 use serde_json::json;
+use visionslide_model::{Presentation, defaults};
 
 /// A deck whose Date placeholders are set up by the engine, exported and imported again.
 fn round_trip(args: serde_json::Value) -> Presentation {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = visionslide_engine::Session::with_new();
     s.execute("design.headerFooter", &args).expect("headerFooter");
     let p = s.doc().expect("doc").doc.clone();
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    deckcraft_pptx::import(&bytes).expect("import")
+    let bytes = visionslide_pptx::export(&p).expect("export");
+    visionslide_pptx::import(&bytes).expect("import")
 }
 
 #[test]
@@ -38,8 +38,8 @@ fn an_automatic_dates_format_survives_a_round_trip() {
 #[test]
 fn a_deck_without_a_date_placeholder_claims_no_format() {
     let p = defaults::new_presentation(None);
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    let q = deckcraft_pptx::import(&bytes).expect("import");
+    let bytes = visionslide_pptx::export(&p).expect("export");
+    let q = visionslide_pptx::import(&bytes).expect("import");
     assert!(!q.header_footer.date);
     assert_eq!(q.header_footer.date_format, "");
 }

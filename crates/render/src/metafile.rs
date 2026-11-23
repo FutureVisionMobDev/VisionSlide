@@ -11,10 +11,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use craft_metafile::{Cap, HAlign, Item, Join, LineStyle, PlacedClip, PlacedItem, Text, Tile, VAlign};
-use deckcraft_fonts::{FontDb, FontFace};
 use kurbo::{Affine, BezPath, Rect, Shape as _};
 use skrifa::MetadataProvider as _;
 use vello_cpu::{Pixmap, RenderContext, Resources, peniko};
+use visionslide_fonts::{FontDb, FontFace};
 
 /// Longest side of a metafile drawn without a target size (export, thumbnails of the picture).
 pub const DEFAULT_SIDE: u32 = 1024;
@@ -216,7 +216,7 @@ fn draw_text(ctx: &mut RenderContext, t: &Text, m: Affine) {
     }
     // Characters as drawn: symbol fonts (Wingdings…) map like bullets; each character takes the
     // face that has it.
-    let chars: Vec<char> = t.text.chars().map(|c| deckcraft_text::symbol_char(&face, family, c).unwrap_or(c)).collect();
+    let chars: Vec<char> = t.text.chars().map(|c| visionslide_text::symbol_char(&face, family, c).unwrap_or(c)).collect();
     let faces: Vec<Arc<FontFace>> = chars
         .iter()
         .map(|c| {
@@ -238,7 +238,7 @@ fn draw_text(ctx: &mut RenderContext, t: &Text, m: Affine) {
         // Byte offset in the run → character index in the string.
         let byte_char: Vec<usize> = run.char_indices().map(|(b, _)| b).collect();
         let ku = f.upem.max(1.0);
-        for g in deckcraft_fonts::shape(&f, &run, &[], |c| c) {
+        for g in visionslide_fonts::shape(&f, &run, &[], |c| c) {
             let ci = i + byte_char.partition_point(|b| *b < g.cluster).min(j - i - 1);
             let s = em / ku;
             shaped.push((Glyph { face: f.clone(), gid: g.gid, x: pen + f64::from(g.x_offset) * s, y: -f64::from(g.y_offset) * s }, ci));
